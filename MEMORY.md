@@ -11,7 +11,7 @@
 - Freigaberegel: Vor Veröffentlichungen im Netz immer Freigabe einholen.
 - Budgetregel: Keine Ausgaben ohne ausdrückliche Zustimmung.
 - Verfügbarkeit: 07:00, 12:00, 16:00–22:00 (Europe/Berlin).
-- Fester 07:00-Check-in: tägliche Nachricht mit dem, was ich seit dem Vortag neu entwickelt/verbessert habe (inkl. Nutzen + PR/Status).
+- Fester 07:00-Check-in: tägliche Nachricht mit dem, was ich seit dem Vortag neu entwickelt/verbessert habe (inkl. Nutzen + PR/Status) + 1–3 konkrete Verbesserungsmöglichkeiten mit Produktivitäts-Tipps/Empfehlungen für den Tag.
 - Feste Lokalisierung: Deutschland; Zeitangaben standardmäßig in Europe/Berlin und Datums-/Zeitformat de-DE verwenden.
 - Entscheidungsregeln (V1):
   - Ohne GO: lokale Software einrichten/erweitern, interne Automatisierungen ohne Kosten, Code/Workflows/Dokumentation bauen, Post-Entwürfe vorbereiten.

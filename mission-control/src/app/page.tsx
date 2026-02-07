@@ -209,6 +209,10 @@ export default function Home() {
       const parsed = JSON.parse(activity.metadata) as { taskId?: string; scheduledAt?: number };
       if (!parsed.taskId) return;
 
+      // Ensure linked tasks are visible even when filters are narrowed down.
+      setTaskStatusFilter("all");
+      setTaskAssigneeFilter("all");
+
       if (typeof parsed.scheduledAt === "number") {
         setWeekOffset(weekOffsetForTimestamp(parsed.scheduledAt));
         setSelectedDay(

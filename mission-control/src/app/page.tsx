@@ -203,27 +203,29 @@ export default function Home() {
     setApprovalPayload("");
   }
 
+  function openTaskInCalendar(taskId: string, scheduledAt?: number) {
+    setTaskStatusFilter("all");
+    setTaskAssigneeFilter("all");
+
+    if (typeof scheduledAt === "number") {
+      setWeekOffset(weekOffsetForTimestamp(scheduledAt));
+      setSelectedDay(
+        new Date(scheduledAt).toLocaleDateString("de-DE", {
+          weekday: "short",
+          day: "2-digit",
+          month: "2-digit",
+        }),
+      );
+    }
+    setExpandedTaskId(taskId);
+  }
+
   function onActivityClick(activity: Activity) {
     if (!activity.metadata) return;
     try {
       const parsed = JSON.parse(activity.metadata) as { taskId?: string; scheduledAt?: number };
       if (!parsed.taskId) return;
-
-      // Ensure linked tasks are visible even when filters are narrowed down.
-      setTaskStatusFilter("all");
-      setTaskAssigneeFilter("all");
-
-      if (typeof parsed.scheduledAt === "number") {
-        setWeekOffset(weekOffsetForTimestamp(parsed.scheduledAt));
-        setSelectedDay(
-          new Date(parsed.scheduledAt).toLocaleDateString("de-DE", {
-            weekday: "short",
-            day: "2-digit",
-            month: "2-digit",
-          }),
-        );
-      }
-      setExpandedTaskId(parsed.taskId);
+      openTaskInCalendar(parsed.taskId, parsed.scheduledAt);
     } catch {
       // ignore invalid metadata
     }
@@ -380,7 +382,10 @@ export default function Home() {
                       const assignee = t.assignee ?? "both";
                       const isExpanded = expandedTaskId === t._id;
                       return (
-                        <div key={t._id} className="rounded border bg-white p-2 text-sm">
+                        <div
+                          key={t._id}
+                          className={`rounded border bg-white p-2 text-sm ${t.status === "done" ? "border-emerald-500" : "border-zinc-200"}`}
+                        >
                           <div className="flex items-start justify-between gap-2">
                             <p className="font-medium">{t.title}</p>
                             <button className={`rounded border px-2 py-0.5 text-xs font-semibold ${assigneeColor[assignee]}`} disabled>{assigneeLabel[assignee]}</button>
@@ -430,10 +435,32 @@ export default function Home() {
             <h2 className="text-lg font-semibold">Globale Suche (Index)</h2>
             <input className="my-3 w-full rounded border px-3 py-2 text-sm" placeholder="suchbegriff..." value={queryTerm} onChange={(e) => setQueryTerm(e.target.value)} />
             {queryTerm && (
-              <div className="space-y-2 text-sm">
-                <p>Aktivitäten: {search.activities.length}</p>
-                <p>Tasks: {search.tasks.length}</p>
-                <p>Dokumente: {search.documents.length}</p>
+              <div className="space-y-3 text-sm">
+                <p className="text-zinc-600">Aktivitäten: {search.activities.length} · Tasks: {search.tasks.length} · Dokumente: {search.documents.length}</p>
+
+                {search.tasks.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Task-Treffer</p>
+                    {search.tasks.map((t) => {
+                      const assignee = t.assignee ?? "both";
+                      return (
+                        <button
+                          key={t._id}
+                          className={`w-full rounded border bg-white p-2 text-left ${t.status === "done" ? "border-emerald-500" : "border-zinc-200"}`}
+                          onClick={() => openTaskInCalendar(t._id, t.scheduledAt)}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-medium">{t.title}</p>
+                            <span className={`rounded border px-2 py-0.5 text-xs font-semibold ${assigneeColor[assignee]}`}>{assigneeLabel[assignee]}</span>
+                          </div>
+                          <p className="text-xs text-zinc-500">
+                            {new Date(t.scheduledAt).toLocaleString("de-DE")} · {taskStatusLabel[t.status]}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </article>

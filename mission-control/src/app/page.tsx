@@ -29,6 +29,25 @@ type SearchResult = {
   documents: { _id: string; title: string }[];
 };
 
+const rollenLabel: Record<Role, string> = {
+  owner: "Inhaber",
+  editor: "Bearbeiter",
+  viewer: "Leser",
+};
+
+const taskStatusLabel: Record<TaskStatus, string> = {
+  planned: "Geplant",
+  in_progress: "In Arbeit",
+  done: "Erledigt",
+};
+
+const queueStatusLabel: Record<QueueItem["status"], string> = {
+  ready: "Bereit",
+  publishing: "Wird veröffentlicht",
+  published: "Veröffentlicht",
+  failed: "Fehlgeschlagen",
+};
+
 function getWeekWindow(offsetWeeks: number) {
   const now = new Date();
   const day = now.getDay();
@@ -122,15 +141,15 @@ export default function Home() {
       <main className="mx-auto max-w-7xl space-y-6">
         <header className="rounded-2xl bg-white p-5 shadow-sm flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold">Mission Control Dashboard · Phase 3</h1>
-            <p className="text-sm text-zinc-600">Search Index, Rollenmodell, Agent-Event-Ingestion, Post-Queue.</p>
+            <h1 className="text-2xl font-semibold">Mission-Control-Dashboard · Phase 3</h1>
+            <p className="text-sm text-zinc-600">Suchindex, Rollenmodell, Agenten-Event-Ingestion und Veröffentlichungs-Warteschlange.</p>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span>Rolle</span>
             <select className="rounded border px-2 py-1" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-              <option value="owner">owner</option>
-              <option value="editor">editor</option>
-              <option value="viewer">viewer</option>
+              <option value="owner">{rollenLabel.owner}</option>
+              <option value="editor">{rollenLabel.editor}</option>
+              <option value="viewer">{rollenLabel.viewer}</option>
             </select>
           </div>
         </header>
@@ -140,7 +159,7 @@ export default function Home() {
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Aktivitätsfeed</h2>
               <select className="rounded border px-2 py-1 text-xs" value={activityActorFilter} onChange={(e) => setActivityActorFilter(e.target.value)}>
-                <option value="all">Alle</option><option value="agent">agent</option><option value="user">user</option><option value="system">system</option>
+                <option value="all">Alle</option><option value="agent">Agent</option><option value="user">Nutzer</option><option value="system">System</option>
               </select>
             </div>
             <form onSubmit={onActivitySubmit} className="mb-3 flex gap-2">
@@ -151,7 +170,7 @@ export default function Home() {
               className="mb-3 rounded border px-2 py-1 text-xs"
               onClick={() => ingestAgentEvent({ source: "automation", action: "Auto-Event Ping", details: "Ingestion Test", type: "heartbeat" })}
             >
-              Test: Agent-Event ingestieren
+              Test: Agenten-Event einspielen
             </button>
             <div className="max-h-[400px] space-y-2 overflow-auto">
               {activities.map((a) => (
@@ -171,7 +190,7 @@ export default function Home() {
               <button className="rounded border px-2 py-1 text-sm" onClick={() => setWeekOffset((w) => w + 1)}>→</button>
               <span className="text-sm text-zinc-600">{new Date(week.start).toLocaleDateString("de-DE")} – {new Date(week.end).toLocaleDateString("de-DE")}</span>
               <select className="rounded border px-2 py-1 text-sm" value={taskStatusFilter} onChange={(e) => setTaskStatusFilter(e.target.value as "all" | TaskStatus)}>
-                <option value="all">all</option><option value="planned">planned</option><option value="in_progress">in_progress</option><option value="done">done</option>
+                <option value="all">Alle</option><option value="planned">Geplant</option><option value="in_progress">In Arbeit</option><option value="done">Erledigt</option>
               </select>
             </div>
             <form onSubmit={onTaskSubmit} className="mb-4 grid gap-2 md:grid-cols-3">
@@ -186,10 +205,10 @@ export default function Home() {
                   {dayTasks.length === 0 ? <p className="text-xs text-zinc-400">leer</p> : dayTasks.map((t) => (
                     <div key={t._id} className="mt-2 rounded bg-zinc-50 p-2 text-sm">
                       <p>{t.title}</p>
-                      <p className="text-xs text-zinc-500">{t.status}</p>
+                      <p className="text-xs text-zinc-500">{taskStatusLabel[t.status]}</p>
                       <div className="mt-1 flex gap-1">
-                        <button className="rounded border px-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "in_progress" })} disabled={!canEdit}>start</button>
-                        <button className="rounded border px-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "done" })} disabled={!canEdit}>done</button>
+                        <button className="rounded border px-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "in_progress" })} disabled={!canEdit}>Starten</button>
+                        <button className="rounded border px-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "done" })} disabled={!canEdit}>Erledigt</button>
                       </div>
                     </div>
                   ))}
@@ -239,17 +258,17 @@ export default function Home() {
           </article>
 
           <article className="rounded-2xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">Post Queue</h2>
-            <p className="text-xs text-zinc-500 mb-2">Approved → ready to publish</p>
+            <h2 className="text-lg font-semibold">Veröffentlichungs-Warteschlange</h2>
+            <p className="text-xs text-zinc-500 mb-2">Freigegeben → bereit zur Veröffentlichung</p>
             <div className="max-h-[300px] overflow-auto space-y-2">
               {queue.map((q) => (
                 <div key={q._id} className="rounded border p-2 text-sm">
                   <p className="font-medium">{q.title}</p>
-                  <p className="text-xs text-zinc-500">{q.platform} · {q.status}</p>
+                  <p className="text-xs text-zinc-500">{q.platform} · {queueStatusLabel[q.status]}</p>
                   <div className="mt-1 flex gap-1">
-                    <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "publishing" })} disabled={!canEdit}>publishing</button>
-                    <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "published" })} disabled={!canEdit}>published</button>
-                    <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "failed" })} disabled={!canEdit}>failed</button>
+                    <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "publishing" })} disabled={!canEdit}>Veröffentliche</button>
+                    <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "published" })} disabled={!canEdit}>Veröffentlicht</button>
+                    <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "failed" })} disabled={!canEdit}>Fehler</button>
                   </div>
                 </div>
               ))}

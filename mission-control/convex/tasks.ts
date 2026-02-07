@@ -5,14 +5,17 @@ export const create = mutation({
   args: {
     title: v.string(),
     description: v.optional(v.string()),
+    assignee: v.optional(v.union(v.literal("ezo"), v.literal("hasan"), v.literal("both"))),
     scheduledAt: v.number(),
   },
   handler: async (ctx, args) => {
+    const assignee = args.assignee ?? "both";
     const taskId = await ctx.db.insert("tasks", {
       ...args,
+      assignee,
       status: "planned",
       createdAt: Date.now(),
-      searchable: `${args.title} ${args.description ?? ""} planned`,
+      searchable: `${args.title} ${args.description ?? ""} ${assignee} planned`,
     });
 
     await ctx.db.insert("activities", {
@@ -20,10 +23,10 @@ export const create = mutation({
       actor: "agent",
       source: "automation",
       type: "task",
-      action: `Task erstellt: ${args.title}`,
+      action: `Task erstellt: ${args.title} (${assignee})`,
       details: args.description,
-      metadata: JSON.stringify({ taskId, scheduledAt: args.scheduledAt }),
-      searchable: `task erstellt ${args.title} ${args.description ?? ""} automation agent`,
+      metadata: JSON.stringify({ taskId, scheduledAt: args.scheduledAt, assignee }),
+      searchable: `task erstellt ${args.title} ${args.description ?? ""} ${assignee} automation agent`,
     });
 
     return taskId;
@@ -39,7 +42,7 @@ export const setStatus = mutation({
     const task = await ctx.db.get(taskId);
     await ctx.db.patch(taskId, {
       status,
-      searchable: `${task?.title ?? ""} ${task?.description ?? ""} ${status}`,
+      searchable: `${task?.title ?? ""} ${task?.description ?? ""} ${task?.assignee ?? "both"} ${status}`,
     });
 
     await ctx.db.insert("activities", {
@@ -81,15 +84,17 @@ export const week = query({
     weekStart: v.number(),
     weekEnd: v.number(),
     status: v.optional(v.union(v.literal("all"), v.literal("planned"), v.literal("in_progress"), v.literal("done"))),
+    assignee: v.optional(v.union(v.literal("all"), v.literal("ezo"), v.literal("hasan"), v.literal("both"))),
   },
-  handler: async (ctx, { weekStart, weekEnd, status }) => {
+  handler: async (ctx, { weekStart, weekEnd, status, assignee }) => {
     const rows = await ctx.db
       .query("tasks")
       .withIndex("by_scheduledAt", (q) => q.gte("scheduledAt", weekStart).lte("scheduledAt", weekEnd))
       .order("asc")
       .collect();
 
-    if (!status || status === "all") return rows;
-    return rows.filter((r) => r.status === status);
+    const byStatus = !status || status === "all" ? rows : rows.filter((r) => r.status === status);
+    if (!assignee || assignee === "all") return byStatus;
+    return byStatus.filter((r) => (r.assignee ?? "both") === assignee);
   },
 });

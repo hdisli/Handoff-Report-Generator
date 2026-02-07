@@ -1,14 +1,15 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 type Role = "owner" | "editor" | "viewer";
 type TaskStatus = "planned" | "in_progress" | "done";
+type TaskAssignee = "ezo" | "hasan" | "both";
 
 type Activity = { _id: string; createdAt: number; actor: string; action: string; details?: string; type: string };
-type Task = { _id: string; title: string; status: TaskStatus; scheduledAt: number };
+type Task = { _id: string; title: string; status: TaskStatus; scheduledAt: number; assignee?: TaskAssignee };
 type Approval = {
   _id: string;
   title: string;
@@ -47,6 +48,12 @@ const taskStatusLabel: Record<TaskStatus, string> = {
   done: "Erledigt",
 };
 
+const assigneeLabel: Record<TaskAssignee, string> = {
+  ezo: "Ezo",
+  hasan: "Hasan",
+  both: "Beide",
+};
+
 const queueStatusLabel: Record<QueueItem["status"], string> = {
   ready: "Bereit",
   publishing: "Wird veröffentlicht",
@@ -71,12 +78,14 @@ export default function Home() {
   const [role, setRole] = useState<Role>("owner");
   const [weekOffset, setWeekOffset] = useState(0);
   const [taskStatusFilter, setTaskStatusFilter] = useState<"all" | TaskStatus>("all");
+  const [taskAssigneeFilter, setTaskAssigneeFilter] = useState<"all" | TaskAssignee>("all");
   const [activityActorFilter, setActivityActorFilter] = useState("all");
   const [queryTerm, setQueryTerm] = useState("");
 
   const [activityAction, setActivityAction] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskAt, setTaskAt] = useState("");
+  const [taskAssignee, setTaskAssignee] = useState<TaskAssignee>("ezo");
   const [approvalTitle, setApprovalTitle] = useState("");
   const [approvalPlatform, setApprovalPlatform] = useState<"instagram" | "tiktok" | "x">("instagram");
   const [approvalPayload, setApprovalPayload] = useState("");
@@ -85,7 +94,12 @@ export default function Home() {
   const week = useMemo(() => getWeekWindow(weekOffset), [weekOffset]);
 
   const activities = (useQuery(api.activities.listRecent, { limit: 60, actor: activityActorFilter }) ?? []) as Activity[];
-  const rawTasks = useQuery(api.tasks.week, { weekStart: week.start, weekEnd: week.end, status: taskStatusFilter });
+  const rawTasks = useQuery(api.tasks.week, {
+    weekStart: week.start,
+    weekEnd: week.end,
+    status: taskStatusFilter,
+    assignee: taskAssigneeFilter,
+  });
   const tasks = useMemo(() => (rawTasks ?? []) as Task[], [rawTasks]);
   const approvals = (useQuery(api.approvals.list, { status: "all", limit: 30 }) ?? []) as Approval[];
   const queue = (useQuery(api.postQueue.list, { status: "all", limit: 30 }) ?? []) as QueueItem[];
@@ -122,14 +136,8 @@ export default function Home() {
   }, [tasks, week.monday]);
 
   const [selectedDay, setSelectedDay] = useState<string>("");
-
-  useEffect(() => {
-    if (!selectedDay && tasksByDay.length > 0) {
-      setSelectedDay(tasksByDay[0].key);
-    }
-  }, [selectedDay, tasksByDay]);
-
-  const selectedBucket = tasksByDay.find((b) => b.key === selectedDay) ?? tasksByDay[0];
+  const effectiveSelectedDay = selectedDay || tasksByDay[0]?.key || "";
+  const selectedBucket = tasksByDay.find((b) => b.key === effectiveSelectedDay) ?? tasksByDay[0];
 
   async function onActivitySubmit(e: FormEvent) {
     e.preventDefault();
@@ -141,9 +149,15 @@ export default function Home() {
   async function onTaskSubmit(e: FormEvent) {
     e.preventDefault();
     if (!canEdit || !taskTitle.trim() || !taskAt) return;
-    await createTask({ title: taskTitle, description: "Im Mission Control geplant", scheduledAt: new Date(taskAt).getTime() });
+    await createTask({
+      title: taskTitle,
+      description: "Im Mission Control geplant",
+      assignee: taskAssignee,
+      scheduledAt: new Date(taskAt).getTime(),
+    });
     setTaskTitle("");
     setTaskAt("");
+    setTaskAssignee("ezo");
   }
 
   async function onApprovalSubmit(e: FormEvent) {
@@ -219,12 +233,20 @@ export default function Home() {
               <button className="rounded border px-2 py-1 text-sm" onClick={() => setWeekOffset((w) => w + 1)}>→</button>
               <span className="text-sm text-zinc-600">{new Date(week.start).toLocaleDateString("de-DE")} – {new Date(week.end).toLocaleDateString("de-DE")}</span>
               <select className="rounded border px-2 py-1 text-sm" value={taskStatusFilter} onChange={(e) => setTaskStatusFilter(e.target.value as "all" | TaskStatus)}>
-                <option value="all">Alle</option><option value="planned">Geplant</option><option value="in_progress">In Arbeit</option><option value="done">Erledigt</option>
+                <option value="all">Alle Status</option><option value="planned">Geplant</option><option value="in_progress">In Arbeit</option><option value="done">Erledigt</option>
+              </select>
+              <select className="rounded border px-2 py-1 text-sm" value={taskAssigneeFilter} onChange={(e) => setTaskAssigneeFilter(e.target.value as "all" | TaskAssignee)}>
+                <option value="all">Alle Personen</option><option value="ezo">Ezo</option><option value="hasan">Hasan</option><option value="both">Beide</option>
               </select>
             </div>
-            <form onSubmit={onTaskSubmit} className="mb-4 grid gap-2 md:grid-cols-3">
+            <form onSubmit={onTaskSubmit} className="mb-4 grid gap-2 md:grid-cols-4">
               <input className="rounded border px-3 py-2 text-sm" placeholder="Tasktitel" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} disabled={!canEdit} />
               <input className="rounded border px-3 py-2 text-sm" type="datetime-local" value={taskAt} onChange={(e) => setTaskAt(e.target.value)} disabled={!canEdit} />
+              <select className="rounded border px-3 py-2 text-sm" value={taskAssignee} onChange={(e) => setTaskAssignee(e.target.value as TaskAssignee)} disabled={!canEdit}>
+                <option value="ezo">Für Ezo</option>
+                <option value="hasan">Für Hasan</option>
+                <option value="both">Für beide</option>
+              </select>
               <button className="rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-40" disabled={!canEdit}>Task planen</button>
             </form>
 
@@ -232,7 +254,7 @@ export default function Home() {
               {tasksByDay.map((bucket) => (
                 <button
                   key={bucket.key}
-                  className={`rounded border p-2 text-left ${selectedDay === bucket.key ? "border-black bg-zinc-100" : "border-zinc-200 bg-white"}`}
+                  className={`rounded border p-2 text-left ${effectiveSelectedDay === bucket.key ? "border-black bg-zinc-100" : "border-zinc-200 bg-white"}`}
                   onClick={() => setSelectedDay(bucket.key)}
                 >
                   <p className="text-sm font-semibold">{bucket.key}</p>
@@ -252,7 +274,7 @@ export default function Home() {
                       <div key={t._id} className="rounded border bg-white p-2 text-sm">
                         <p className="font-medium">{t.title}</p>
                         <p className="text-xs text-zinc-500">
-                          {new Date(t.scheduledAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} · {taskStatusLabel[t.status]}
+                          {new Date(t.scheduledAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} · {taskStatusLabel[t.status]} · {assigneeLabel[t.assignee ?? "both"]}
                         </p>
                         <div className="mt-2 flex flex-wrap gap-1">
                           <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "planned" })} disabled={!canEdit}>Geplant</button>

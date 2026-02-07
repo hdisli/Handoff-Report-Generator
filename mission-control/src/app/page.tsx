@@ -397,7 +397,7 @@ export default function Home() {
               <input className="rounded border px-3 py-2 text-sm" inputMode="numeric" placeholder="TT" value={taskDay} onChange={(e) => setTaskDay(e.target.value.replace(/\D/g, "").slice(0, 2))} disabled={!canEdit} />
               <input className="rounded border px-3 py-2 text-sm" inputMode="numeric" placeholder="MM" value={taskMonth} onChange={(e) => setTaskMonth(e.target.value.replace(/\D/g, "").slice(0, 2))} disabled={!canEdit} />
               <input className="rounded border px-3 py-2 text-sm" inputMode="numeric" placeholder="YYYY" value={taskYear} onChange={(e) => setTaskYear(e.target.value.replace(/\D/g, "").slice(0, 4))} disabled={!canEdit} />
-              <input className="rounded border px-3 py-2 text-sm" type="time" value={taskTime} onChange={(e) => setTaskTime(e.target.value)} disabled={!canEdit} />
+              <input className="rounded border px-3 py-2 text-sm min-w-[96px]" type="time" value={taskTime} onChange={(e) => setTaskTime(e.target.value)} disabled={!canEdit} />
               <select className="rounded border px-3 py-2 text-sm md:col-span-2" value={taskAssignee} onChange={(e) => setTaskAssignee(e.target.value as TaskAssignee)} disabled={!canEdit}>
                 <option value="ezo">Für Ezo</option>
                 <option value="hasan">Für Hasan</option>

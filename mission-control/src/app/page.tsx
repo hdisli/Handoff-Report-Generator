@@ -9,7 +9,7 @@ type TaskStatus = "planned" | "in_progress" | "done";
 type TaskAssignee = "ezo" | "hasan" | "both";
 
 type Activity = { _id: string; createdAt: number; actor: string; action: string; details?: string; type: string };
-type Task = { _id: string; title: string; status: TaskStatus; scheduledAt: number; assignee?: TaskAssignee };
+type Task = { _id: string; title: string; description?: string; status: TaskStatus; scheduledAt: number; assignee?: TaskAssignee };
 type Approval = {
   _id: string;
   title: string;
@@ -54,6 +54,12 @@ const assigneeLabel: Record<TaskAssignee, string> = {
   both: "Beide",
 };
 
+const assigneeColor: Record<TaskAssignee, string> = {
+  ezo: "bg-sky-100 text-sky-700 border-sky-200",
+  hasan: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  both: "bg-violet-100 text-violet-700 border-violet-200",
+};
+
 const queueStatusLabel: Record<QueueItem["status"], string> = {
   ready: "Bereit",
   publishing: "Wird veröffentlicht",
@@ -84,6 +90,7 @@ export default function Home() {
 
   const [activityAction, setActivityAction] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
+  const [taskDescription, setTaskDescription] = useState("");
   const [taskDate, setTaskDate] = useState("");
   const [taskTime, setTaskTime] = useState("");
   const [taskAssignee, setTaskAssignee] = useState<TaskAssignee>("ezo");
@@ -137,6 +144,7 @@ export default function Home() {
   }, [tasks, week.monday]);
 
   const [selectedDay, setSelectedDay] = useState<string>("");
+  const [expandedTaskId, setExpandedTaskId] = useState<string>("");
   const effectiveSelectedDay = selectedDay || tasksByDay[0]?.key || "";
   const selectedBucket = tasksByDay.find((b) => b.key === effectiveSelectedDay) ?? tasksByDay[0];
 
@@ -153,11 +161,12 @@ export default function Home() {
     const iso = `${taskDate}T${taskTime}`;
     await createTask({
       title: taskTitle,
-      description: "Im Mission Control geplant",
+      description: taskDescription.trim() || undefined,
       assignee: taskAssignee,
       scheduledAt: new Date(iso).getTime(),
     });
     setTaskTitle("");
+    setTaskDescription("");
     setTaskDate("");
     setTaskTime("");
     setTaskAssignee("ezo");
@@ -242,8 +251,9 @@ export default function Home() {
                 <option value="all">Alle Personen</option><option value="ezo">Ezo</option><option value="hasan">Hasan</option><option value="both">Beide</option>
               </select>
             </div>
-            <form onSubmit={onTaskSubmit} className="mb-4 grid gap-2 md:grid-cols-5">
+            <form onSubmit={onTaskSubmit} className="mb-4 grid gap-2 md:grid-cols-6">
               <input className="rounded border px-3 py-2 text-sm" placeholder="Tasktitel" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} disabled={!canEdit} />
+              <input className="rounded border px-3 py-2 text-sm md:col-span-2" placeholder="Beschreibung (optional)" value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} disabled={!canEdit} />
               <input className="rounded border px-3 py-2 text-sm" type="date" value={taskDate} onChange={(e) => setTaskDate(e.target.value)} disabled={!canEdit} />
               <input className="rounded border px-3 py-2 text-sm" type="time" value={taskTime} onChange={(e) => setTaskTime(e.target.value)} disabled={!canEdit} />
               <select className="rounded border px-3 py-2 text-sm" value={taskAssignee} onChange={(e) => setTaskAssignee(e.target.value as TaskAssignee)} disabled={!canEdit}>
@@ -251,7 +261,7 @@ export default function Home() {
                 <option value="hasan">Für Hasan</option>
                 <option value="both">Für beide</option>
               </select>
-              <button className="rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-40" disabled={!canEdit}>Task planen</button>
+              <button className="rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-40 md:col-span-6" disabled={!canEdit}>Task planen</button>
             </form>
 
             <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
@@ -259,7 +269,10 @@ export default function Home() {
                 <button
                   key={bucket.key}
                   className={`rounded border p-2 text-left ${effectiveSelectedDay === bucket.key ? "border-black bg-zinc-100" : "border-zinc-200 bg-white"}`}
-                  onClick={() => setSelectedDay(bucket.key)}
+                  onClick={() => {
+                    setSelectedDay(bucket.key);
+                    setExpandedTaskId("");
+                  }}
                 >
                   <p className="text-sm font-semibold">{bucket.key}</p>
                   <p className="text-xs text-zinc-500">{bucket.tasks.length} Task(s)</p>
@@ -274,20 +287,40 @@ export default function Home() {
                   <p className="text-sm text-zinc-500">Keine Tasks an diesem Tag.</p>
                 ) : (
                   <div className="space-y-2">
-                    {selectedBucket.tasks.map((t) => (
-                      <div key={t._id} className="rounded border bg-white p-2 text-sm">
-                        <p className="font-medium">{t.title}</p>
-                        <p className="text-xs text-zinc-500">
-                          {new Date(t.scheduledAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} · {taskStatusLabel[t.status]} · {assigneeLabel[t.assignee ?? "both"]}
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "planned" })} disabled={!canEdit}>Geplant</button>
-                          <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "in_progress" })} disabled={!canEdit}>Starten</button>
-                          <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "done" })} disabled={!canEdit}>Erledigt</button>
-                          <button className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700" onClick={() => removeTask({ taskId: t._id as never })} disabled={!canEdit}>Löschen</button>
+                    {selectedBucket.tasks.map((t) => {
+                      const assignee = t.assignee ?? "both";
+                      const isExpanded = expandedTaskId === t._id;
+                      return (
+                        <div key={t._id} className="rounded border bg-white p-2 text-sm">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium">{t.title}</p>
+                            <span className={`rounded border px-2 py-0.5 text-xs ${assigneeColor[assignee]}`}>{assigneeLabel[assignee]}</span>
+                          </div>
+                          <p className="text-xs text-zinc-500">
+                            {new Date(t.scheduledAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} · {taskStatusLabel[t.status]}
+                          </p>
+
+                          <div className="mt-2">
+                            <button className="rounded border px-2 py-1 text-xs" onClick={() => setExpandedTaskId(isExpanded ? "" : (t._id as string))}>
+                              {isExpanded ? "Details schließen" : "Details anzeigen"}
+                            </button>
+                          </div>
+
+                          {isExpanded && (
+                            <div className="mt-2 rounded border bg-zinc-50 p-2 text-xs text-zinc-700">
+                              {t.description?.trim() ? t.description : "Keine Beschreibung hinterlegt."}
+                            </div>
+                          )}
+
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "planned" })} disabled={!canEdit}>Geplant</button>
+                            <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "in_progress" })} disabled={!canEdit}>Starten</button>
+                            <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "done" })} disabled={!canEdit}>Erledigt</button>
+                            <button className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700" onClick={() => removeTask({ taskId: t._id as never })} disabled={!canEdit}>Löschen</button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -1,6 +1,10 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+function searchableText(args: { type: string; action: string; details?: string; metadata?: string; actor: string; source: string }) {
+  return `${args.type} ${args.action} ${args.details ?? ""} ${args.metadata ?? ""} ${args.actor} ${args.source}`.trim();
+}
+
 export const log = mutation({
   args: {
     actor: v.optional(v.string()),
@@ -11,13 +15,16 @@ export const log = mutation({
     metadata: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const actor = args.actor ?? "agent";
+    const source = args.source ?? "dashboard";
     return await ctx.db.insert("activities", {
-      actor: args.actor ?? "agent",
-      source: args.source ?? "dashboard",
+      actor,
+      source,
       type: args.type,
       action: args.action,
       details: args.details,
       metadata: args.metadata,
+      searchable: searchableText({ ...args, actor, source }),
       createdAt: Date.now(),
     });
   },

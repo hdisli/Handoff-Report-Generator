@@ -15,6 +15,7 @@ export const upsert = mutation({
         content: args.content,
         kind: args.kind,
         updatedAt: Date.now(),
+        searchable: `${args.title} ${args.content} ${args.kind}`,
       });
 
       await ctx.db.insert("activities", {
@@ -24,6 +25,7 @@ export const upsert = mutation({
         type: "document",
         action: `Dokument aktualisiert: ${args.title}`,
         details: args.kind,
+        searchable: `dokument aktualisiert ${args.title} ${args.kind} dashboard agent`,
       });
 
       return args.id;
@@ -34,6 +36,7 @@ export const upsert = mutation({
       content: args.content,
       kind: args.kind,
       updatedAt: Date.now(),
+      searchable: `${args.title} ${args.content} ${args.kind}`,
     });
 
     await ctx.db.insert("activities", {
@@ -44,6 +47,7 @@ export const upsert = mutation({
       action: `Dokument erstellt: ${args.title}`,
       details: args.kind,
       metadata: JSON.stringify({ documentId }),
+      searchable: `dokument erstellt ${args.title} ${args.kind} dashboard agent`,
     });
 
     return documentId;

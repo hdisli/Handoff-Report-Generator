@@ -24,6 +24,7 @@ export const create = mutation({
       action: `Freigabe erstellt: ${args.title}`,
       details: args.platform,
       metadata: JSON.stringify({ approvalId: id }),
+      searchable: `freigabe erstellt ${args.title} ${args.platform} approval`,
     });
 
     return id;
@@ -46,6 +47,18 @@ export const decide = mutation({
     });
 
     const approval = await ctx.db.get(args.id);
+
+    if (approval && args.status === "approved") {
+      await ctx.db.insert("postQueue", {
+        createdAt: Date.now(),
+        title: approval.title,
+        platform: approval.platform,
+        approvalId: args.id,
+        payload: approval.payload,
+        status: "ready",
+      });
+    }
+
     await ctx.db.insert("activities", {
       createdAt: Date.now(),
       actor: args.decidedBy,
@@ -54,6 +67,7 @@ export const decide = mutation({
       action: `Freigabe ${args.status}`,
       details: approval?.title,
       metadata: JSON.stringify({ approvalId: args.id }),
+      searchable: `freigabe ${args.status} ${approval?.title ?? ""} ${args.decidedBy}`,
     });
   },
 });

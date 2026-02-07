@@ -12,6 +12,7 @@ export const create = mutation({
       ...args,
       status: "planned",
       createdAt: Date.now(),
+      searchable: `${args.title} ${args.description ?? ""} planned`,
     });
 
     await ctx.db.insert("activities", {
@@ -22,6 +23,7 @@ export const create = mutation({
       action: `Task erstellt: ${args.title}`,
       details: args.description,
       metadata: JSON.stringify({ taskId, scheduledAt: args.scheduledAt }),
+      searchable: `task erstellt ${args.title} ${args.description ?? ""} automation agent`,
     });
 
     return taskId;
@@ -35,7 +37,10 @@ export const setStatus = mutation({
   },
   handler: async (ctx, { taskId, status }) => {
     const task = await ctx.db.get(taskId);
-    await ctx.db.patch(taskId, { status });
+    await ctx.db.patch(taskId, {
+      status,
+      searchable: `${task?.title ?? ""} ${task?.description ?? ""} ${status}`,
+    });
 
     await ctx.db.insert("activities", {
       createdAt: Date.now(),
@@ -45,6 +50,7 @@ export const setStatus = mutation({
       action: `Task-Status: ${status}`,
       details: task?.title,
       metadata: JSON.stringify({ taskId }),
+      searchable: `task status ${status} ${task?.title ?? ""} automation agent`,
     });
   },
 });

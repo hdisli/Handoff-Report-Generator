@@ -37,9 +37,13 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
 - `convex/search.ts` – globale Suche
 - `convex/documents.ts` – Dokumentdaten für Search
 
-## Nächste Ausbaustufen
+## Phase 3 (umgesetzt)
 
-- Auth + Rollen
-- echte Volltextsuche (Tokenisierung/Ranking)
-- persistente Kalenderfilter + Drag&Drop
-- automatisches Logging aus externen Worker-Events
+- Rollenmodell im UI (owner/editor/viewer) mit Schreibrechten
+- Suchindizes per Convex `searchIndex` für Activities/Tasks/Documents
+- Agent-Event-Ingestion (`convex/events.ts`) inkl. Batch-Ingest
+- Post-Queue (`convex/postQueue.ts`): approved → ready/publishing/published/failed
+
+## Hinweise
+
+Nach Schema-Änderungen bitte `npx convex dev` laufen lassen, damit Indizes/Typen aktualisiert werden.

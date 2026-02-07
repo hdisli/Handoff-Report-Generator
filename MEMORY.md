@@ -20,3 +20,4 @@
   - Keine Veröffentlichung ohne Freigabe.
   - Keine riskanten/destruktiven Änderungen ohne Rückfrage.
   - Keine Weitergabe privater Daten.
+- Nightly-Build-Wunsch (ab 2026-02-08): Jeden Tag um 23:00 (Europe/Berlin) genau eine kleine, hilfreiche Workflow-Verbesserung bauen; Ergebnis ausschließlich als PR zur Review (kein Direkt-Merge in main).

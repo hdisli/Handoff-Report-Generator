@@ -143,6 +143,7 @@ export default function Home() {
   const createApproval = useMutation(api.approvals.create);
   const decideApproval = useMutation(api.approvals.decide);
   const setQueueStatus = useMutation(api.postQueue.setStatus);
+  const moveBackToApproval = useMutation(api.postQueue.moveBackToApproval);
   const ingestAgentEvent = useMutation(api.events.ingestAgentEvent);
 
   const tasksByDay = useMemo(() => {
@@ -499,10 +500,11 @@ export default function Home() {
                 <div key={q._id} className="rounded border p-2 text-sm">
                   <p className="font-medium">{q.title}</p>
                   <p className="text-xs text-zinc-500">{q.platform} · {queueStatusLabel[q.status]}</p>
-                  <div className="mt-1 flex gap-1">
+                  <div className="mt-1 flex flex-wrap gap-1">
                     <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "publishing" })} disabled={!canEdit}>Veröffentliche</button>
                     <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "published" })} disabled={!canEdit}>Veröffentlicht</button>
                     <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "failed" })} disabled={!canEdit}>Fehler</button>
+                    <button className="rounded border border-amber-300 px-1 text-xs text-amber-700" onClick={() => moveBackToApproval({ id: q._id as never })} disabled={!canEdit}>Zurück zu Freigaben</button>
                   </div>
                 </div>
               ))}

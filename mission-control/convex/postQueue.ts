@@ -37,3 +37,33 @@ export const setStatus = mutation({
     });
   },
 });
+
+export const moveBackToApproval = mutation({
+  args: {
+    id: v.id("postQueue"),
+  },
+  handler: async (ctx, { id }) => {
+    const row = await ctx.db.get(id);
+    if (!row) return;
+
+    await ctx.db.patch(row.approvalId, {
+      status: "pending",
+      decidedAt: undefined,
+      decidedBy: undefined,
+      note: "Aus Warteschlange zurückgesetzt",
+    });
+
+    await ctx.db.delete(id);
+
+    await ctx.db.insert("activities", {
+      createdAt: Date.now(),
+      actor: "agent",
+      source: "approval",
+      type: "approval",
+      action: "Freigabe zurück in Prüfung",
+      details: row.title,
+      metadata: JSON.stringify({ approvalId: row.approvalId, postQueueId: id }),
+      searchable: `freigabe zurückgesetzt ${row.title}`,
+    });
+  },
+});

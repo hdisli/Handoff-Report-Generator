@@ -11,4 +11,11 @@
 - Freigaberegel: Vor Veröffentlichungen im Netz immer Freigabe einholen.
 - Budgetregel: Keine Ausgaben ohne ausdrückliche Zustimmung.
 - Verfügbarkeit: 07:00, 12:00, 16:00–22:00 (Europe/Berlin).
-- Offene Klärung: detaillierte Entscheidungsregeln + konkrete No-Gos.
+- Entscheidungsregeln (V1):
+  - Ohne GO: lokale Software einrichten/erweitern, interne Automatisierungen ohne Kosten, Code/Workflows/Dokumentation bauen, Post-Entwürfe vorbereiten.
+  - Mit GO: jede öffentliche Veröffentlichung, alle Kosten/Abos, sensible Login-/Kontoänderungen, destruktive Änderungen an wichtigen Daten.
+- No-Gos (V1):
+  - Kein Geldausgeben ohne Freigabe.
+  - Keine Veröffentlichung ohne Freigabe.
+  - Keine riskanten/destruktiven Änderungen ohne Rückfrage.
+  - Keine Weitergabe privater Daten.

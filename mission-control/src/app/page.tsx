@@ -322,7 +322,6 @@ export default function Home() {
                           )}
 
                           <div className="mt-2 flex flex-wrap gap-1">
-                            <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "in_progress" })} disabled={!canEdit}>Starten</button>
                             <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "done" })} disabled={!canEdit}>Erledigt</button>
                             <button className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700" onClick={() => removeTask({ taskId: t._id as never })} disabled={!canEdit}>Löschen</button>
                           </div>

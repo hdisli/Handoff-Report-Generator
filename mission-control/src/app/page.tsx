@@ -257,6 +257,11 @@ export default function Home() {
               <select className="rounded border px-2 py-1 text-sm" value={taskAssigneeFilter} onChange={(e) => setTaskAssigneeFilter(e.target.value as "all" | TaskAssignee)}>
                 <option value="all">Alle Personen</option><option value="ezo">Ezo</option><option value="hasan">Hasan</option><option value="both">Beide</option>
               </select>
+              <div className="flex items-center gap-1 text-xs">
+                <button className={`rounded border px-2 py-0.5 font-semibold ${assigneeColor.ezo}`} disabled>Ezo</button>
+                <button className={`rounded border px-2 py-0.5 font-semibold ${assigneeColor.hasan}`} disabled>Hasan</button>
+                <button className={`rounded border px-2 py-0.5 font-semibold ${assigneeColor.both}`} disabled>Beide</button>
+              </div>
             </div>
             <form onSubmit={onTaskSubmit} className="mb-4 grid gap-2 md:grid-cols-8">
               <input className="rounded border px-3 py-2 text-sm md:col-span-2" placeholder="Tasktitel" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} disabled={!canEdit} />
@@ -303,7 +308,7 @@ export default function Home() {
                         <div key={t._id} className="rounded border bg-white p-2 text-sm">
                           <div className="flex items-start justify-between gap-2">
                             <p className="font-medium">{t.title}</p>
-                            <span className={`rounded border px-2 py-0.5 text-xs ${assigneeColor[assignee]}`}>{assigneeLabel[assignee]}</span>
+                            <button className={`rounded border px-2 py-0.5 text-xs font-semibold ${assigneeColor[assignee]}`} disabled>{assigneeLabel[assignee]}</button>
                           </div>
                           <p className="text-xs text-zinc-500">
                             {new Date(t.scheduledAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} · {taskStatusLabel[t.status]}
@@ -322,7 +327,7 @@ export default function Home() {
                           )}
 
                           <div className="mt-2 flex flex-wrap gap-1">
-                            <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "done" })} disabled={!canEdit}>Erledigt</button>
+                            <button className="rounded border border-emerald-700 bg-emerald-600 px-2 py-1 text-xs font-semibold text-white" onClick={() => setTaskStatus({ taskId: t._id as never, status: "done" })} disabled={!canEdit}>Erledigt</button>
                             <button className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700" onClick={() => removeTask({ taskId: t._id as never })} disabled={!canEdit}>Löschen</button>
                           </div>
                         </div>

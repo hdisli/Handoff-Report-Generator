@@ -168,6 +168,7 @@ export default function Home() {
   const [selectedDay, setSelectedDay] = useState<string>("");
   const [expandedTaskId, setExpandedTaskId] = useState<string>("");
   const [expandedApprovalId, setExpandedApprovalId] = useState<string>("");
+  const [expandedQueueId, setExpandedQueueId] = useState<string>("");
   const effectiveSelectedDay = selectedDay || tasksByDay[0]?.key || "";
   const selectedBucket = tasksByDay.find((b) => b.key === effectiveSelectedDay) ?? tasksByDay[0];
 
@@ -231,16 +232,26 @@ export default function Home() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function openQueueById(queueId: string) {
+    setExpandedQueueId(queueId);
+    const el = document.getElementById("queue-section");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function onActivityClick(activity: Activity) {
     if (!activity.metadata) return;
     try {
-      const parsed = JSON.parse(activity.metadata) as { taskId?: string; scheduledAt?: number; approvalId?: string };
+      const parsed = JSON.parse(activity.metadata) as { taskId?: string; scheduledAt?: number; approvalId?: string; postQueueId?: string };
       if (parsed.taskId) {
         openTaskInCalendar(parsed.taskId, parsed.scheduledAt);
         return;
       }
       if (parsed.approvalId) {
         openApprovalById(parsed.approvalId);
+        return;
+      }
+      if (parsed.postQueueId) {
+        openQueueById(parsed.postQueueId);
       }
     } catch {
       // ignore invalid metadata
@@ -291,11 +302,11 @@ export default function Home() {
 
                 if (a.metadata) {
                   try {
-                    const parsed = JSON.parse(a.metadata) as { assignee?: TaskAssignee; taskId?: string; approvalId?: string };
+                    const parsed = JSON.parse(a.metadata) as { assignee?: TaskAssignee; taskId?: string; approvalId?: string; postQueueId?: string };
                     if (parsed.assignee === "ezo" || parsed.assignee === "hasan" || parsed.assignee === "both") {
                       activityAssignee = parsed.assignee;
                     }
-                    hasLinkedTarget = !!parsed.taskId || !!parsed.approvalId;
+                    hasLinkedTarget = !!parsed.taskId || !!parsed.approvalId || !!parsed.postQueueId;
                   } catch {
                     // ignore invalid metadata
                   }
@@ -514,15 +525,20 @@ export default function Home() {
             </div>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm">
+          <article id="queue-section" className="rounded-2xl bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Veröffentlichungs-Warteschlange</h2>
             <p className="text-xs text-zinc-500 mb-2">Freigegeben → bereit zur Veröffentlichung</p>
             <div className="max-h-[300px] overflow-auto space-y-2">
-              {queue.map((q) => (
-                <div key={q._id} className="rounded border p-2 text-sm">
+              {queue.map((q) => {
+                const expanded = expandedQueueId === q._id;
+                return (
+                <div key={q._id} className={`rounded border p-2 text-sm ${expanded ? "border-black" : ""}`}>
                   <p className="font-medium">{q.title}</p>
                   <p className="text-xs text-zinc-500">{q.platform} · {queueStatusLabel[q.status]}</p>
-                  {q.status === "failed" && q.errorMessage && (
+                  <button className="mt-1 rounded border px-2 py-1 text-xs" onClick={() => setExpandedQueueId(expanded ? "" : (q._id as string))}>
+                    {expanded ? "Details schließen" : "Details anzeigen"}
+                  </button>
+                  {expanded && q.status === "failed" && q.errorMessage && (
                     <p className="mt-1 rounded border border-rose-200 bg-rose-50 p-1 text-xs text-rose-700">Fehler: {q.errorMessage}</p>
                   )}
                   <div className="mt-1 flex flex-wrap gap-1">
@@ -542,7 +558,8 @@ export default function Home() {
                     <button className="rounded border border-amber-300 px-1 text-xs text-amber-700" onClick={() => moveBackToApproval({ id: q._id as never })} disabled={!canEdit}>Zurück zu Freigaben</button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </article>
         </section>

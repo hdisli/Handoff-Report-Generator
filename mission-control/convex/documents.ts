@@ -16,15 +16,37 @@ export const upsert = mutation({
         kind: args.kind,
         updatedAt: Date.now(),
       });
+
+      await ctx.db.insert("activities", {
+        createdAt: Date.now(),
+        actor: "agent",
+        source: "dashboard",
+        type: "document",
+        action: `Dokument aktualisiert: ${args.title}`,
+        details: args.kind,
+      });
+
       return args.id;
     }
 
-    return await ctx.db.insert("documents", {
+    const documentId = await ctx.db.insert("documents", {
       title: args.title,
       content: args.content,
       kind: args.kind,
       updatedAt: Date.now(),
     });
+
+    await ctx.db.insert("activities", {
+      createdAt: Date.now(),
+      actor: "agent",
+      source: "dashboard",
+      type: "document",
+      action: `Dokument erstellt: ${args.title}`,
+      details: args.kind,
+      metadata: JSON.stringify({ documentId }),
+    });
+
+    return documentId;
   },
 });
 

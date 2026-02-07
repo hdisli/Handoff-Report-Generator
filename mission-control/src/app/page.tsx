@@ -8,7 +8,7 @@ type Role = "owner" | "editor" | "viewer";
 type TaskStatus = "planned" | "in_progress" | "done";
 type TaskAssignee = "ezo" | "hasan" | "both";
 
-type Activity = { _id: string; createdAt: number; actor: string; action: string; details?: string; type: string };
+type Activity = { _id: string; createdAt: number; actor: string; action: string; details?: string; metadata?: string; type: string };
 type Task = { _id: string; title: string; description?: string; status: TaskStatus; scheduledAt: number; assignee?: TaskAssignee };
 type Approval = {
   _id: string;
@@ -226,11 +226,30 @@ export default function Home() {
             <div className="max-h-[400px] space-y-2 overflow-auto">
               {activities.map((a) => {
                 const doneActivity = /erledigt|\bdone\b/i.test(a.action);
+                let activityAssignee: TaskAssignee | undefined;
+                if (a.metadata) {
+                  try {
+                    const parsed = JSON.parse(a.metadata) as { assignee?: TaskAssignee };
+                    if (parsed.assignee === "ezo" || parsed.assignee === "hasan" || parsed.assignee === "both") {
+                      activityAssignee = parsed.assignee;
+                    }
+                  } catch {
+                    // ignore invalid metadata
+                  }
+                }
+
                 return (
                   <div key={a._id} className={`rounded border p-2 text-sm ${doneActivity ? "border-emerald-300 bg-emerald-50" : ""}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className={`font-medium ${doneActivity ? "text-emerald-700" : ""}`}>{a.action}</p>
+                        <div className="flex items-center gap-2">
+                          <p className={`font-medium ${doneActivity ? "text-emerald-700" : ""}`}>{a.action}</p>
+                          {activityAssignee && (
+                            <button className={`rounded border px-2 py-0.5 text-xs font-semibold ${assigneeColor[activityAssignee]}`} disabled>
+                              {assigneeLabel[activityAssignee]}
+                            </button>
+                          )}
+                        </div>
                         <p className="text-xs text-zinc-500">{a.actor} · {a.type} · {new Date(a.createdAt).toLocaleString("de-DE")}</p>
                       </div>
                       <button

@@ -224,23 +224,26 @@ export default function Home() {
               Test: Agenten-Event einspielen
             </button>
             <div className="max-h-[400px] space-y-2 overflow-auto">
-              {activities.map((a) => (
-                <div key={a._id} className="rounded border p-2 text-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium">{a.action}</p>
-                      <p className="text-xs text-zinc-500">{a.actor} · {a.type} · {new Date(a.createdAt).toLocaleString("de-DE")}</p>
+              {activities.map((a) => {
+                const doneActivity = /erledigt|\bdone\b/i.test(a.action);
+                return (
+                  <div key={a._id} className={`rounded border p-2 text-sm ${doneActivity ? "border-emerald-300 bg-emerald-50" : ""}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className={`font-medium ${doneActivity ? "text-emerald-700" : ""}`}>{a.action}</p>
+                        <p className="text-xs text-zinc-500">{a.actor} · {a.type} · {new Date(a.createdAt).toLocaleString("de-DE")}</p>
+                      </div>
+                      <button
+                        className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700 disabled:opacity-40"
+                        onClick={() => removeActivity({ id: a._id as never })}
+                        disabled={!canEdit}
+                      >
+                        Löschen
+                      </button>
                     </div>
-                    <button
-                      className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700 disabled:opacity-40"
-                      onClick={() => removeActivity({ id: a._id as never })}
-                      disabled={!canEdit}
-                    >
-                      Löschen
-                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </article>
 
@@ -327,7 +330,17 @@ export default function Home() {
                           )}
 
                           <div className="mt-2 flex flex-wrap gap-1">
-                            <button className="rounded border border-emerald-700 bg-emerald-600 px-2 py-1 text-xs font-semibold text-white" onClick={() => setTaskStatus({ taskId: t._id as never, status: "done" })} disabled={!canEdit}>Erledigt</button>
+                            <button
+                              className={`rounded border px-2 py-1 text-xs font-semibold ${
+                                t.status === "done"
+                                  ? "border-emerald-700 bg-emerald-600 text-white"
+                                  : "border-zinc-300 bg-white text-zinc-700"
+                              }`}
+                              onClick={() => setTaskStatus({ taskId: t._id as never, status: t.status === "done" ? "planned" : "done" })}
+                              disabled={!canEdit}
+                            >
+                              Erledigt
+                            </button>
                             <button className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700" onClick={() => removeTask({ taskId: t._id as never })} disabled={!canEdit}>Löschen</button>
                           </div>
                         </div>

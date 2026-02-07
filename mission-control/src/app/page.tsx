@@ -297,6 +297,9 @@ export default function Home() {
             <div className="max-h-[400px] space-y-2 overflow-auto">
               {activities.map((a) => {
                 const doneActivity = /erledigt|\bdone\b/i.test(a.action);
+                const queuePublished = /PostQueue Status:\s*published/i.test(a.action);
+                const queuePublishing = /PostQueue Status:\s*publishing/i.test(a.action);
+                const queueFailed = /PostQueue Status:\s*failed/i.test(a.action);
                 let activityAssignee: TaskAssignee | undefined;
                 let hasLinkedTarget = false;
 
@@ -315,14 +318,14 @@ export default function Home() {
                 return (
                   <div
                     key={a._id}
-                    className={`rounded border p-2 text-sm ${doneActivity ? "border-emerald-300 bg-emerald-50" : ""} ${hasLinkedTarget ? "cursor-pointer hover:bg-zinc-50" : ""}`}
+                    className={`rounded border p-2 text-sm ${doneActivity || queuePublished ? "border-emerald-300 bg-emerald-50" : ""} ${queuePublishing ? "border-amber-300 bg-amber-50" : ""} ${queueFailed ? "border-rose-300 bg-rose-50" : ""} ${hasLinkedTarget ? "cursor-pointer hover:bg-zinc-50" : ""}`}
                     onClick={() => hasLinkedTarget && onActivityClick(a)}
                     title={hasLinkedTarget ? "Klick öffnet den verknüpften Eintrag" : undefined}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className={`font-medium ${doneActivity ? "text-emerald-700" : ""}`}>{a.action}</p>
+                          <p className={`font-medium ${doneActivity || queuePublished ? "text-emerald-700" : queuePublishing ? "text-amber-700" : queueFailed ? "text-rose-700" : ""}`}>{a.action}</p>
                           {activityAssignee && (
                             <button className={`rounded border px-2 py-0.5 text-xs font-semibold ${assigneeColor[activityAssignee]}`} disabled>
                               {assigneeLabel[activityAssignee]}
@@ -331,16 +334,29 @@ export default function Home() {
                         </div>
                         <p className="text-xs text-zinc-500">{a.actor} · {a.type} · {new Date(a.createdAt).toLocaleString("de-DE")}</p>
                       </div>
-                      <button
-                        className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700 disabled:opacity-40"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeActivity({ id: a._id as never });
-                        }}
-                        disabled={!canEdit}
-                      >
-                        Löschen
-                      </button>
+                      <div className="flex items-center gap-1">
+                        {hasLinkedTarget && (
+                          <button
+                            className="rounded border px-2 py-1 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onActivityClick(a);
+                            }}
+                          >
+                            Öffnen
+                          </button>
+                        )}
+                        <button
+                          className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700 disabled:opacity-40"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeActivity({ id: a._id as never });
+                          }}
+                          disabled={!canEdit}
+                        >
+                          Löschen
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -540,8 +556,13 @@ export default function Home() {
                   <button className="mt-1 rounded border px-2 py-1 text-xs" onClick={() => setExpandedQueueId(expanded ? "" : (q._id as string))}>
                     {expanded ? "Details schließen" : "Details anzeigen"}
                   </button>
-                  {expanded && q.status === "failed" && q.errorMessage && (
-                    <p className="mt-1 rounded border border-rose-200 bg-rose-50 p-1 text-xs text-rose-700">Fehler: {q.errorMessage}</p>
+                  {q.status === "failed" && q.errorMessage && (
+                    <button
+                      className="mt-1 rounded border border-rose-200 bg-rose-50 p-1 text-left text-xs text-rose-700"
+                      onClick={() => setExpandedQueueId(expanded ? "" : (q._id as string))}
+                    >
+                      Fehler: {expanded ? q.errorMessage : "anzeigen"}
+                    </button>
                   )}
                   <div className="mt-1 flex flex-wrap gap-1">
                     <button className="rounded border border-amber-300 bg-amber-100 px-1 text-xs text-amber-800" onClick={() => setQueueStatus({ id: q._id as never, status: "publishing" })} disabled={!canEdit}>Veröffentliche</button>

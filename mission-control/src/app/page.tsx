@@ -534,7 +534,9 @@ export default function Home() {
                 return (
                 <div key={q._id} className={`rounded border p-2 text-sm ${expanded ? "border-black" : ""}`}>
                   <p className="font-medium">{q.title}</p>
-                  <p className="text-xs text-zinc-500">{q.platform} · {queueStatusLabel[q.status]}</p>
+                  <p className={`text-xs ${q.status === "published" ? "text-emerald-700" : q.status === "publishing" ? "text-amber-700" : "text-zinc-500"}`}>
+                    {q.platform} · {queueStatusLabel[q.status]}
+                  </p>
                   <button className="mt-1 rounded border px-2 py-1 text-xs" onClick={() => setExpandedQueueId(expanded ? "" : (q._id as string))}>
                     {expanded ? "Details schließen" : "Details anzeigen"}
                   </button>
@@ -542,8 +544,8 @@ export default function Home() {
                     <p className="mt-1 rounded border border-rose-200 bg-rose-50 p-1 text-xs text-rose-700">Fehler: {q.errorMessage}</p>
                   )}
                   <div className="mt-1 flex flex-wrap gap-1">
-                    <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "publishing" })} disabled={!canEdit}>Veröffentliche</button>
-                    <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "published" })} disabled={!canEdit}>Veröffentlicht</button>
+                    <button className="rounded border border-amber-300 bg-amber-100 px-1 text-xs text-amber-800" onClick={() => setQueueStatus({ id: q._id as never, status: "publishing" })} disabled={!canEdit}>Veröffentliche</button>
+                    <button className="rounded border border-emerald-700 bg-emerald-600 px-1 text-xs font-semibold text-white" onClick={() => setQueueStatus({ id: q._id as never, status: "published" })} disabled={!canEdit}>Veröffentlicht</button>
                     <button
                       className="rounded border px-1 text-xs"
                       onClick={() => {
@@ -555,7 +557,7 @@ export default function Home() {
                     >
                       Fehler
                     </button>
-                    <button className="rounded border border-amber-300 px-1 text-xs text-amber-700" onClick={() => moveBackToApproval({ id: q._id as never })} disabled={!canEdit}>Zurück zu Freigaben</button>
+                    <button className="rounded border border-violet-700 bg-violet-600 px-1 text-xs font-semibold text-white" onClick={() => moveBackToApproval({ id: q._id as never })} disabled={!canEdit}>Zurück zu Freigaben</button>
                   </div>
                 </div>
                 );

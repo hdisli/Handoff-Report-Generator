@@ -16,8 +16,7 @@ Next.js + Convex Dashboard mit drei Kernfunktionen:
 
 ```bash
 npm install
-npx convex dev
-npm run dev
+npm run dev:all
 ```
 
 Dann `.env.local` anlegen:
@@ -44,6 +43,13 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
 - Agent-Event-Ingestion (`convex/events.ts`) inkl. Batch-Ingest
 - Post-Queue (`convex/postQueue.ts`): approved → ready/publishing/published/failed
 
+## Workflow-Kommandos
+
+- `npm run dev:all` startet Next.js + Convex gemeinsam in einem Terminal.
+- `npm run dev:web` startet nur das Frontend.
+- `npm run dev:backend` startet nur Convex.
+- `npm run check` führt Lint + Typecheck als Schnellprüfung vor Commits aus.
+
 ## Hinweise
 
-Nach Schema-Änderungen bitte `npx convex dev` laufen lassen, damit Indizes/Typen aktualisiert werden.
+Nach Schema-Änderungen bitte `npm run dev:backend` (oder `npm run dev:all`) laufen lassen, damit Indizes/Typen aktualisiert werden.

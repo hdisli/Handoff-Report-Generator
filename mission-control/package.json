@@ -4,9 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:web": "next dev",
+    "dev:backend": "npx convex dev",
+    "dev:all": "bash -lc 'trap \"kill 0\" EXIT; npm run dev:web & npm run dev:backend & wait'",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck"
   },
   "dependencies": {
     "convex": "^1.31.7",

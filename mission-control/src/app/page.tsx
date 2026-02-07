@@ -55,9 +55,9 @@ const assigneeLabel: Record<TaskAssignee, string> = {
 };
 
 const assigneeColor: Record<TaskAssignee, string> = {
-  ezo: "bg-sky-100 text-sky-700 border-sky-200",
-  hasan: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  both: "bg-violet-100 text-violet-700 border-violet-200",
+  ezo: "bg-sky-600 text-white border-sky-700",
+  hasan: "bg-emerald-600 text-white border-emerald-700",
+  both: "bg-violet-600 text-white border-violet-700",
 };
 
 const queueStatusLabel: Record<QueueItem["status"], string> = {
@@ -91,7 +91,9 @@ export default function Home() {
   const [activityAction, setActivityAction] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
-  const [taskDate, setTaskDate] = useState("");
+  const [taskDay, setTaskDay] = useState("");
+  const [taskMonth, setTaskMonth] = useState("");
+  const [taskYear, setTaskYear] = useState("");
   const [taskTime, setTaskTime] = useState("");
   const [taskAssignee, setTaskAssignee] = useState<TaskAssignee>("ezo");
   const [approvalTitle, setApprovalTitle] = useState("");
@@ -157,8 +159,11 @@ export default function Home() {
 
   async function onTaskSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!canEdit || !taskTitle.trim() || !taskDate || !taskTime) return;
-    const iso = `${taskDate}T${taskTime}`;
+    if (!canEdit || !taskTitle.trim() || !taskDay || !taskMonth || !taskYear || !taskTime) return;
+    if (taskYear.length !== 4) return;
+    const dd = taskDay.padStart(2, "0");
+    const mm = taskMonth.padStart(2, "0");
+    const iso = `${taskYear}-${mm}-${dd}T${taskTime}`;
     await createTask({
       title: taskTitle,
       description: taskDescription.trim() || undefined,
@@ -167,7 +172,9 @@ export default function Home() {
     });
     setTaskTitle("");
     setTaskDescription("");
-    setTaskDate("");
+    setTaskDay("");
+    setTaskMonth("");
+    setTaskYear("");
     setTaskTime("");
     setTaskAssignee("ezo");
   }
@@ -251,17 +258,19 @@ export default function Home() {
                 <option value="all">Alle Personen</option><option value="ezo">Ezo</option><option value="hasan">Hasan</option><option value="both">Beide</option>
               </select>
             </div>
-            <form onSubmit={onTaskSubmit} className="mb-4 grid gap-2 md:grid-cols-6">
-              <input className="rounded border px-3 py-2 text-sm" placeholder="Tasktitel" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} disabled={!canEdit} />
+            <form onSubmit={onTaskSubmit} className="mb-4 grid gap-2 md:grid-cols-8">
+              <input className="rounded border px-3 py-2 text-sm md:col-span-2" placeholder="Tasktitel" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} disabled={!canEdit} />
               <input className="rounded border px-3 py-2 text-sm md:col-span-2" placeholder="Beschreibung (optional)" value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} disabled={!canEdit} />
-              <input className="rounded border px-3 py-2 text-sm" type="date" value={taskDate} onChange={(e) => setTaskDate(e.target.value)} disabled={!canEdit} />
+              <input className="rounded border px-3 py-2 text-sm" inputMode="numeric" placeholder="TT" value={taskDay} onChange={(e) => setTaskDay(e.target.value.replace(/\D/g, "").slice(0, 2))} disabled={!canEdit} />
+              <input className="rounded border px-3 py-2 text-sm" inputMode="numeric" placeholder="MM" value={taskMonth} onChange={(e) => setTaskMonth(e.target.value.replace(/\D/g, "").slice(0, 2))} disabled={!canEdit} />
+              <input className="rounded border px-3 py-2 text-sm" inputMode="numeric" placeholder="YYYY" value={taskYear} onChange={(e) => setTaskYear(e.target.value.replace(/\D/g, "").slice(0, 4))} disabled={!canEdit} />
               <input className="rounded border px-3 py-2 text-sm" type="time" value={taskTime} onChange={(e) => setTaskTime(e.target.value)} disabled={!canEdit} />
-              <select className="rounded border px-3 py-2 text-sm" value={taskAssignee} onChange={(e) => setTaskAssignee(e.target.value as TaskAssignee)} disabled={!canEdit}>
+              <select className="rounded border px-3 py-2 text-sm md:col-span-2" value={taskAssignee} onChange={(e) => setTaskAssignee(e.target.value as TaskAssignee)} disabled={!canEdit}>
                 <option value="ezo">Für Ezo</option>
                 <option value="hasan">Für Hasan</option>
                 <option value="both">Für beide</option>
               </select>
-              <button className="rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-40 md:col-span-6" disabled={!canEdit}>Task planen</button>
+              <button className="rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-40 md:col-span-8" disabled={!canEdit}>Task planen</button>
             </form>
 
             <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
@@ -313,7 +322,6 @@ export default function Home() {
                           )}
 
                           <div className="mt-2 flex flex-wrap gap-1">
-                            <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "planned" })} disabled={!canEdit}>Geplant</button>
                             <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "in_progress" })} disabled={!canEdit}>Starten</button>
                             <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "done" })} disabled={!canEdit}>Erledigt</button>
                             <button className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700" onClick={() => removeTask({ taskId: t._id as never })} disabled={!canEdit}>Löschen</button>

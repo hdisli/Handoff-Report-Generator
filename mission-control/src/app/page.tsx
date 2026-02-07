@@ -84,7 +84,8 @@ export default function Home() {
 
   const [activityAction, setActivityAction] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
-  const [taskAt, setTaskAt] = useState("");
+  const [taskDate, setTaskDate] = useState("");
+  const [taskTime, setTaskTime] = useState("");
   const [taskAssignee, setTaskAssignee] = useState<TaskAssignee>("ezo");
   const [approvalTitle, setApprovalTitle] = useState("");
   const [approvalPlatform, setApprovalPlatform] = useState<"instagram" | "tiktok" | "x">("instagram");
@@ -148,15 +149,17 @@ export default function Home() {
 
   async function onTaskSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!canEdit || !taskTitle.trim() || !taskAt) return;
+    if (!canEdit || !taskTitle.trim() || !taskDate || !taskTime) return;
+    const iso = `${taskDate}T${taskTime}`;
     await createTask({
       title: taskTitle,
       description: "Im Mission Control geplant",
       assignee: taskAssignee,
-      scheduledAt: new Date(taskAt).getTime(),
+      scheduledAt: new Date(iso).getTime(),
     });
     setTaskTitle("");
-    setTaskAt("");
+    setTaskDate("");
+    setTaskTime("");
     setTaskAssignee("ezo");
   }
 
@@ -239,9 +242,10 @@ export default function Home() {
                 <option value="all">Alle Personen</option><option value="ezo">Ezo</option><option value="hasan">Hasan</option><option value="both">Beide</option>
               </select>
             </div>
-            <form onSubmit={onTaskSubmit} className="mb-4 grid gap-2 md:grid-cols-4">
+            <form onSubmit={onTaskSubmit} className="mb-4 grid gap-2 md:grid-cols-5">
               <input className="rounded border px-3 py-2 text-sm" placeholder="Tasktitel" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} disabled={!canEdit} />
-              <input className="rounded border px-3 py-2 text-sm" type="datetime-local" value={taskAt} onChange={(e) => setTaskAt(e.target.value)} disabled={!canEdit} />
+              <input className="rounded border px-3 py-2 text-sm" type="date" value={taskDate} onChange={(e) => setTaskDate(e.target.value)} disabled={!canEdit} />
+              <input className="rounded border px-3 py-2 text-sm" type="time" value={taskTime} onChange={(e) => setTaskTime(e.target.value)} disabled={!canEdit} />
               <select className="rounded border px-3 py-2 text-sm" value={taskAssignee} onChange={(e) => setTaskAssignee(e.target.value as TaskAssignee)} disabled={!canEdit}>
                 <option value="ezo">Für Ezo</option>
                 <option value="hasan">Für Hasan</option>

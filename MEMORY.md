@@ -11,6 +11,7 @@
 - Freigaberegel: Vor Veröffentlichungen im Netz immer Freigabe einholen.
 - Budgetregel: Keine Ausgaben ohne ausdrückliche Zustimmung.
 - Verfügbarkeit: 07:00, 12:00, 16:00–22:00 (Europe/Berlin).
+- Feste Lokalisierung: Deutschland; Zeitangaben standardmäßig in Europe/Berlin und Datums-/Zeitformat de-DE verwenden.
 - Entscheidungsregeln (V1):
   - Ohne GO: lokale Software einrichten/erweitern, interne Automatisierungen ohne Kosten, Code/Workflows/Dokumentation bauen, Post-Entwürfe vorbereiten.
   - Mit GO: jede öffentliche Veröffentlichung, alle Kosten/Abos, sensible Login-/Kontoänderungen, destruktive Änderungen an wichtigen Daten.

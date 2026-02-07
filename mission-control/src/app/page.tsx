@@ -343,17 +343,6 @@ export default function Home() {
                         <p className="text-xs text-zinc-500">{a.actor} · {a.type} · {new Date(a.createdAt).toLocaleString("de-DE")}</p>
                       </div>
                       <div className="flex items-center gap-1">
-                        {hasLinkedTarget && (
-                          <button
-                            className="rounded border px-2 py-1 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onActivityClick(a);
-                            }}
-                          >
-                            Öffnen
-                          </button>
-                        )}
                         <button
                           className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700 disabled:opacity-40"
                           onClick={(e) => {

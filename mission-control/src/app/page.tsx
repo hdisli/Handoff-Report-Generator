@@ -80,6 +80,22 @@ function getWeekWindow(offsetWeeks: number) {
   return { start: monday.getTime(), end: sunday.getTime(), monday };
 }
 
+function weekOffsetForTimestamp(ts: number) {
+  const now = new Date();
+  const target = new Date(ts);
+
+  const nowMonday = new Date(now);
+  nowMonday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  nowMonday.setHours(0, 0, 0, 0);
+
+  const targetMonday = new Date(target);
+  targetMonday.setDate(target.getDate() - ((target.getDay() + 6) % 7));
+  targetMonday.setHours(0, 0, 0, 0);
+
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  return Math.round((targetMonday.getTime() - nowMonday.getTime()) / msPerWeek);
+}
+
 export default function Home() {
   const [role, setRole] = useState<Role>("owner");
   const [weekOffset, setWeekOffset] = useState(0);
@@ -187,6 +203,28 @@ export default function Home() {
     setApprovalPayload("");
   }
 
+  function onActivityClick(activity: Activity) {
+    if (!activity.metadata) return;
+    try {
+      const parsed = JSON.parse(activity.metadata) as { taskId?: string; scheduledAt?: number };
+      if (!parsed.taskId) return;
+
+      if (typeof parsed.scheduledAt === "number") {
+        setWeekOffset(weekOffsetForTimestamp(parsed.scheduledAt));
+        setSelectedDay(
+          new Date(parsed.scheduledAt).toLocaleDateString("de-DE", {
+            weekday: "short",
+            day: "2-digit",
+            month: "2-digit",
+          }),
+        );
+      }
+      setExpandedTaskId(parsed.taskId);
+    } catch {
+      // ignore invalid metadata
+    }
+  }
+
   return (
     <div className="min-h-screen bg-zinc-100 p-6 text-zinc-900">
       <main className="mx-auto max-w-7xl space-y-6">
@@ -227,19 +265,27 @@ export default function Home() {
               {activities.map((a) => {
                 const doneActivity = /erledigt|\bdone\b/i.test(a.action);
                 let activityAssignee: TaskAssignee | undefined;
+                let hasTaskLink = false;
+
                 if (a.metadata) {
                   try {
-                    const parsed = JSON.parse(a.metadata) as { assignee?: TaskAssignee };
+                    const parsed = JSON.parse(a.metadata) as { assignee?: TaskAssignee; taskId?: string };
                     if (parsed.assignee === "ezo" || parsed.assignee === "hasan" || parsed.assignee === "both") {
                       activityAssignee = parsed.assignee;
                     }
+                    hasTaskLink = !!parsed.taskId;
                   } catch {
                     // ignore invalid metadata
                   }
                 }
 
                 return (
-                  <div key={a._id} className={`rounded border p-2 text-sm ${doneActivity ? "border-emerald-300 bg-emerald-50" : ""}`}>
+                  <div
+                    key={a._id}
+                    className={`rounded border p-2 text-sm ${doneActivity ? "border-emerald-300 bg-emerald-50" : ""} ${hasTaskLink ? "cursor-pointer hover:bg-zinc-50" : ""}`}
+                    onClick={() => hasTaskLink && onActivityClick(a)}
+                    title={hasTaskLink ? "Klick öffnet Task im Kalender" : undefined}
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="flex items-center gap-2">
@@ -254,7 +300,10 @@ export default function Home() {
                       </div>
                       <button
                         className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700 disabled:opacity-40"
-                        onClick={() => removeActivity({ id: a._id as never })}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeActivity({ id: a._id as never });
+                        }}
                         disabled={!canEdit}
                       >
                         Löschen

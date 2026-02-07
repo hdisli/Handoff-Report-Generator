@@ -53,7 +53,7 @@ export const setStatus = mutation({
       type: "task",
       action: `Task-Status: ${status}`,
       details: task?.title,
-      metadata: JSON.stringify({ taskId, assignee }),
+      metadata: JSON.stringify({ taskId, assignee, scheduledAt: task?.scheduledAt }),
       searchable: `task status ${status} ${task?.title ?? ""} ${assignee} automation agent`,
     });
   },

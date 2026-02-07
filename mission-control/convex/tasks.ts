@@ -55,6 +55,27 @@ export const setStatus = mutation({
   },
 });
 
+export const remove = mutation({
+  args: {
+    taskId: v.id("tasks"),
+  },
+  handler: async (ctx, { taskId }) => {
+    const task = await ctx.db.get(taskId);
+    await ctx.db.delete(taskId);
+
+    await ctx.db.insert("activities", {
+      createdAt: Date.now(),
+      actor: "agent",
+      source: "dashboard",
+      type: "task",
+      action: `Task gelöscht`,
+      details: task?.title,
+      metadata: JSON.stringify({ taskId }),
+      searchable: `task gelöscht ${task?.title ?? ""} dashboard agent`,
+    });
+  },
+});
+
 export const week = query({
   args: {
     weekStart: v.number(),

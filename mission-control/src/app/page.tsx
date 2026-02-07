@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -27,6 +27,12 @@ type SearchResult = {
   activities: Activity[];
   tasks: Task[];
   documents: { _id: string; title: string }[];
+};
+
+type DayBucket = {
+  key: string;
+  date: Date;
+  tasks: Task[];
 };
 
 const rollenLabel: Record<Role, string> = {
@@ -76,7 +82,6 @@ export default function Home() {
   const [approvalPayload, setApprovalPayload] = useState("");
 
   const canEdit = role === "owner" || role === "editor";
-
   const week = useMemo(() => getWeekWindow(weekOffset), [weekOffset]);
 
   const activities = (useQuery(api.activities.listRecent, { limit: 60, actor: activityActorFilter }) ?? []) as Activity[];
@@ -91,12 +96,40 @@ export default function Home() {
   }) as SearchResult;
 
   const logActivity = useMutation(api.activities.log);
+  const removeActivity = useMutation(api.activities.remove);
   const createTask = useMutation(api.tasks.create);
   const setTaskStatus = useMutation(api.tasks.setStatus);
+  const removeTask = useMutation(api.tasks.remove);
   const createApproval = useMutation(api.approvals.create);
   const decideApproval = useMutation(api.approvals.decide);
   const setQueueStatus = useMutation(api.postQueue.setStatus);
   const ingestAgentEvent = useMutation(api.events.ingestAgentEvent);
+
+  const tasksByDay = useMemo(() => {
+    const map = new Map<string, DayBucket>();
+    for (let i = 0; i < 7; i += 1) {
+      const d = new Date(week.monday);
+      d.setDate(week.monday.getDate() + i);
+      const key = d.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+      map.set(key, { key, date: d, tasks: [] });
+    }
+    tasks.forEach((task) => {
+      const key = new Date(task.scheduledAt).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+      const bucket = map.get(key);
+      if (bucket) bucket.tasks.push(task);
+    });
+    return Array.from(map.values());
+  }, [tasks, week.monday]);
+
+  const [selectedDay, setSelectedDay] = useState<string>("");
+
+  useEffect(() => {
+    if (!selectedDay && tasksByDay.length > 0) {
+      setSelectedDay(tasksByDay[0].key);
+    }
+  }, [selectedDay, tasksByDay]);
+
+  const selectedBucket = tasksByDay.find((b) => b.key === selectedDay) ?? tasksByDay[0];
 
   async function onActivitySubmit(e: FormEvent) {
     e.preventDefault();
@@ -120,21 +153,6 @@ export default function Home() {
     setApprovalTitle("");
     setApprovalPayload("");
   }
-
-  const tasksByDay = useMemo(() => {
-    const map = new Map<string, Task[]>();
-    for (let i = 0; i < 7; i += 1) {
-      const d = new Date(week.monday);
-      d.setDate(week.monday.getDate() + i);
-      const key = d.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
-      map.set(key, []);
-    }
-    tasks.forEach((task) => {
-      const key = new Date(task.scheduledAt).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
-      map.set(key, [...(map.get(key) ?? []), task]);
-    });
-    return Array.from(map.entries());
-  }, [tasks, week.monday]);
 
   return (
     <div className="min-h-screen bg-zinc-100 p-6 text-zinc-900">
@@ -175,8 +193,19 @@ export default function Home() {
             <div className="max-h-[400px] space-y-2 overflow-auto">
               {activities.map((a) => (
                 <div key={a._id} className="rounded border p-2 text-sm">
-                  <p className="font-medium">{a.action}</p>
-                  <p className="text-xs text-zinc-500">{a.actor} · {a.type} · {new Date(a.createdAt).toLocaleString("de-DE")}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium">{a.action}</p>
+                      <p className="text-xs text-zinc-500">{a.actor} · {a.type} · {new Date(a.createdAt).toLocaleString("de-DE")}</p>
+                    </div>
+                    <button
+                      className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700 disabled:opacity-40"
+                      onClick={() => removeActivity({ id: a._id as never })}
+                      disabled={!canEdit}
+                    >
+                      Löschen
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -198,23 +227,45 @@ export default function Home() {
               <input className="rounded border px-3 py-2 text-sm" type="datetime-local" value={taskAt} onChange={(e) => setTaskAt(e.target.value)} disabled={!canEdit} />
               <button className="rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-40" disabled={!canEdit}>Task planen</button>
             </form>
-            <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
-              {tasksByDay.map(([day, dayTasks]) => (
-                <div key={day} className="rounded border p-2">
-                  <p className="text-sm font-semibold">{day}</p>
-                  {dayTasks.length === 0 ? <p className="text-xs text-zinc-400">leer</p> : dayTasks.map((t) => (
-                    <div key={t._id} className="mt-2 rounded bg-zinc-50 p-2 text-sm">
-                      <p>{t.title}</p>
-                      <p className="text-xs text-zinc-500">{taskStatusLabel[t.status]}</p>
-                      <div className="mt-1 flex gap-1">
-                        <button className="rounded border px-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "in_progress" })} disabled={!canEdit}>Starten</button>
-                        <button className="rounded border px-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "done" })} disabled={!canEdit}>Erledigt</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+
+            <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+              {tasksByDay.map((bucket) => (
+                <button
+                  key={bucket.key}
+                  className={`rounded border p-2 text-left ${selectedDay === bucket.key ? "border-black bg-zinc-100" : "border-zinc-200 bg-white"}`}
+                  onClick={() => setSelectedDay(bucket.key)}
+                >
+                  <p className="text-sm font-semibold">{bucket.key}</p>
+                  <p className="text-xs text-zinc-500">{bucket.tasks.length} Task(s)</p>
+                </button>
               ))}
             </div>
+
+            {selectedBucket && (
+              <div className="rounded-xl border bg-zinc-50 p-3">
+                <p className="mb-2 text-sm font-semibold">Tag geöffnet: {selectedBucket.key}</p>
+                {selectedBucket.tasks.length === 0 ? (
+                  <p className="text-sm text-zinc-500">Keine Tasks an diesem Tag.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedBucket.tasks.map((t) => (
+                      <div key={t._id} className="rounded border bg-white p-2 text-sm">
+                        <p className="font-medium">{t.title}</p>
+                        <p className="text-xs text-zinc-500">
+                          {new Date(t.scheduledAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} · {taskStatusLabel[t.status]}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "planned" })} disabled={!canEdit}>Geplant</button>
+                          <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "in_progress" })} disabled={!canEdit}>Starten</button>
+                          <button className="rounded border px-2 py-1 text-xs" onClick={() => setTaskStatus({ taskId: t._id as never, status: "done" })} disabled={!canEdit}>Erledigt</button>
+                          <button className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-700" onClick={() => removeTask({ taskId: t._id as never })} disabled={!canEdit}>Löschen</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </article>
         </section>
 

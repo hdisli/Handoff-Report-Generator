@@ -30,6 +30,15 @@ export const log = mutation({
   },
 });
 
+export const remove = mutation({
+  args: {
+    id: v.id("activities"),
+  },
+  handler: async (ctx, { id }) => {
+    await ctx.db.delete(id);
+  },
+});
+
 export const listRecent = query({
   args: {
     limit: v.optional(v.number()),

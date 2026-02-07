@@ -16,12 +16,15 @@ type Approval = {
   platform: "instagram" | "tiktok" | "x";
   payload: string;
   status: "pending" | "approved" | "rejected";
+  note?: string;
 };
 type QueueItem = {
   _id: string;
   title: string;
   platform: "instagram" | "tiktok" | "x";
   status: "ready" | "publishing" | "published" | "failed";
+  approvalId: string;
+  errorMessage?: string;
 };
 
 type SearchResult = {
@@ -164,6 +167,7 @@ export default function Home() {
 
   const [selectedDay, setSelectedDay] = useState<string>("");
   const [expandedTaskId, setExpandedTaskId] = useState<string>("");
+  const [expandedApprovalId, setExpandedApprovalId] = useState<string>("");
   const effectiveSelectedDay = selectedDay || tasksByDay[0]?.key || "";
   const selectedBucket = tasksByDay.find((b) => b.key === effectiveSelectedDay) ?? tasksByDay[0];
 
@@ -221,12 +225,23 @@ export default function Home() {
     setExpandedTaskId(taskId);
   }
 
+  function openApprovalById(approvalId: string) {
+    setExpandedApprovalId(approvalId);
+    const el = document.getElementById("approvals-section");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function onActivityClick(activity: Activity) {
     if (!activity.metadata) return;
     try {
-      const parsed = JSON.parse(activity.metadata) as { taskId?: string; scheduledAt?: number };
-      if (!parsed.taskId) return;
-      openTaskInCalendar(parsed.taskId, parsed.scheduledAt);
+      const parsed = JSON.parse(activity.metadata) as { taskId?: string; scheduledAt?: number; approvalId?: string };
+      if (parsed.taskId) {
+        openTaskInCalendar(parsed.taskId, parsed.scheduledAt);
+        return;
+      }
+      if (parsed.approvalId) {
+        openApprovalById(parsed.approvalId);
+      }
     } catch {
       // ignore invalid metadata
     }
@@ -272,15 +287,15 @@ export default function Home() {
               {activities.map((a) => {
                 const doneActivity = /erledigt|\bdone\b/i.test(a.action);
                 let activityAssignee: TaskAssignee | undefined;
-                let hasTaskLink = false;
+                let hasLinkedTarget = false;
 
                 if (a.metadata) {
                   try {
-                    const parsed = JSON.parse(a.metadata) as { assignee?: TaskAssignee; taskId?: string };
+                    const parsed = JSON.parse(a.metadata) as { assignee?: TaskAssignee; taskId?: string; approvalId?: string };
                     if (parsed.assignee === "ezo" || parsed.assignee === "hasan" || parsed.assignee === "both") {
                       activityAssignee = parsed.assignee;
                     }
-                    hasTaskLink = !!parsed.taskId;
+                    hasLinkedTarget = !!parsed.taskId || !!parsed.approvalId;
                   } catch {
                     // ignore invalid metadata
                   }
@@ -289,9 +304,9 @@ export default function Home() {
                 return (
                   <div
                     key={a._id}
-                    className={`rounded border p-2 text-sm ${doneActivity ? "border-emerald-300 bg-emerald-50" : ""} ${hasTaskLink ? "cursor-pointer hover:bg-zinc-50" : ""}`}
-                    onClick={() => hasTaskLink && onActivityClick(a)}
-                    title={hasTaskLink ? "Klick öffnet Task im Kalender" : undefined}
+                    className={`rounded border p-2 text-sm ${doneActivity ? "border-emerald-300 bg-emerald-50" : ""} ${hasLinkedTarget ? "cursor-pointer hover:bg-zinc-50" : ""}`}
+                    onClick={() => hasLinkedTarget && onActivityClick(a)}
+                    title={hasLinkedTarget ? "Klick öffnet den verknüpften Eintrag" : undefined}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -466,29 +481,36 @@ export default function Home() {
             )}
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm">
+          <article id="approvals-section" className="rounded-2xl bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold">Freigaben</h2>
             <form onSubmit={onApprovalSubmit} className="my-3 space-y-2">
               <input className="w-full rounded border px-3 py-2 text-sm" placeholder="Titel" value={approvalTitle} onChange={(e) => setApprovalTitle(e.target.value)} disabled={!canEdit} />
               <select className="w-full rounded border px-3 py-2 text-sm" value={approvalPlatform} onChange={(e) => setApprovalPlatform(e.target.value as "instagram" | "tiktok" | "x")}>
                 <option value="instagram">instagram</option><option value="tiktok">tiktok</option><option value="x">x</option>
               </select>
-              <textarea className="w-full rounded border px-3 py-2 text-sm" rows={2} placeholder="payload" value={approvalPayload} onChange={(e) => setApprovalPayload(e.target.value)} disabled={!canEdit} />
+              <textarea className="w-full rounded border px-3 py-2 text-sm" rows={3} placeholder="Details / Inhalt" value={approvalPayload} onChange={(e) => setApprovalPayload(e.target.value)} disabled={!canEdit} />
               <button className="rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-40" disabled={!canEdit}>Anlegen</button>
             </form>
             <div className="max-h-[260px] overflow-auto space-y-2">
-              {approvals.map((a) => (
-                <div key={a._id} className="rounded border p-2 text-sm">
-                  <p className="font-medium">{a.title}</p>
-                  <p className="text-xs text-zinc-500">{a.platform} · {a.status}</p>
-                  {a.status === "pending" && (
-                    <div className="mt-2 flex gap-2">
-                      <button className="rounded bg-emerald-600 px-2 py-1 text-xs text-white" onClick={() => decideApproval({ id: a._id as never, status: "approved", decidedBy: "Hasan" })} disabled={!canEdit}>Freigeben</button>
-                      <button className="rounded bg-rose-600 px-2 py-1 text-xs text-white" onClick={() => decideApproval({ id: a._id as never, status: "rejected", decidedBy: "Hasan" })} disabled={!canEdit}>Ablehnen</button>
-                    </div>
-                  )}
-                </div>
-              ))}
+              {approvals.map((a) => {
+                const expanded = expandedApprovalId === a._id;
+                return (
+                  <div key={a._id} className={`rounded border p-2 text-sm ${expanded ? "border-black" : ""}`}>
+                    <p className="font-medium">{a.title}</p>
+                    <p className="text-xs text-zinc-500">{a.platform} · {a.status}</p>
+                    <button className="mt-2 rounded border px-2 py-1 text-xs" onClick={() => setExpandedApprovalId(expanded ? "" : (a._id as string))}>
+                      {expanded ? "Details schließen" : "Details anzeigen"}
+                    </button>
+                    {expanded && <p className="mt-2 rounded border bg-zinc-50 p-2 text-xs text-zinc-700 whitespace-pre-wrap">{a.payload}</p>}
+                    {a.status === "pending" && (
+                      <div className="mt-2 flex gap-2">
+                        <button className="rounded bg-emerald-600 px-2 py-1 text-xs text-white" onClick={() => decideApproval({ id: a._id as never, status: "approved", decidedBy: "Hasan" })} disabled={!canEdit}>Freigeben</button>
+                        <button className="rounded bg-rose-600 px-2 py-1 text-xs text-white" onClick={() => decideApproval({ id: a._id as never, status: "rejected", decidedBy: "Hasan" })} disabled={!canEdit}>Ablehnen</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </article>
 
@@ -500,10 +522,23 @@ export default function Home() {
                 <div key={q._id} className="rounded border p-2 text-sm">
                   <p className="font-medium">{q.title}</p>
                   <p className="text-xs text-zinc-500">{q.platform} · {queueStatusLabel[q.status]}</p>
+                  {q.status === "failed" && q.errorMessage && (
+                    <p className="mt-1 rounded border border-rose-200 bg-rose-50 p-1 text-xs text-rose-700">Fehler: {q.errorMessage}</p>
+                  )}
                   <div className="mt-1 flex flex-wrap gap-1">
                     <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "publishing" })} disabled={!canEdit}>Veröffentliche</button>
                     <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "published" })} disabled={!canEdit}>Veröffentlicht</button>
-                    <button className="rounded border px-1 text-xs" onClick={() => setQueueStatus({ id: q._id as never, status: "failed" })} disabled={!canEdit}>Fehler</button>
+                    <button
+                      className="rounded border px-1 text-xs"
+                      onClick={() => {
+                        const msg = window.prompt("Fehlerdetails", q.errorMessage ?? "");
+                        if (msg === null) return;
+                        setQueueStatus({ id: q._id as never, status: "failed", errorMessage: msg || "Unbekannter Fehler" });
+                      }}
+                      disabled={!canEdit}
+                    >
+                      Fehler
+                    </button>
                     <button className="rounded border border-amber-300 px-1 text-xs text-amber-700" onClick={() => moveBackToApproval({ id: q._id as never })} disabled={!canEdit}>Zurück zu Freigaben</button>
                   </div>
                 </div>

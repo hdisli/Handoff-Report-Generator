@@ -70,6 +70,7 @@ export default defineSchema({
     status: v.union(v.literal("ready"), v.literal("publishing"), v.literal("published"), v.literal("failed")),
     scheduledAt: v.optional(v.number()),
     publishedAt: v.optional(v.number()),
+    errorMessage: v.optional(v.string()),
   })
     .index("by_createdAt", ["createdAt"])
     .index("by_status", ["status"]),

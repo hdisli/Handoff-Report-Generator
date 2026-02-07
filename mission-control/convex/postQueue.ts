@@ -17,11 +17,13 @@ export const setStatus = mutation({
   args: {
     id: v.id("postQueue"),
     status: v.union(v.literal("ready"), v.literal("publishing"), v.literal("published"), v.literal("failed")),
+    errorMessage: v.optional(v.string()),
   },
-  handler: async (ctx, { id, status }) => {
+  handler: async (ctx, { id, status, errorMessage }) => {
     await ctx.db.patch(id, {
       status,
       publishedAt: status === "published" ? Date.now() : undefined,
+      errorMessage: status === "failed" ? (errorMessage ?? "Unbekannter Fehler") : undefined,
     });
 
     const row = await ctx.db.get(id);
@@ -31,9 +33,9 @@ export const setStatus = mutation({
       source: "publisher",
       type: "postQueue",
       action: `PostQueue Status: ${status}`,
-      details: row?.title,
-      metadata: JSON.stringify({ postQueueId: id }),
-      searchable: `postqueue status ${status} ${row?.title ?? ""}`,
+      details: status === "failed" ? `${row?.title ?? ""} · ${errorMessage ?? "Unbekannter Fehler"}` : row?.title,
+      metadata: JSON.stringify({ postQueueId: id, approvalId: row?.approvalId }),
+      searchable: `postqueue status ${status} ${row?.title ?? ""} ${errorMessage ?? ""}`,
     });
   },
 });

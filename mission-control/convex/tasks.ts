@@ -45,6 +45,7 @@ export const setStatus = mutation({
       searchable: `${task?.title ?? ""} ${task?.description ?? ""} ${task?.assignee ?? "both"} ${status}`,
     });
 
+    const assignee = task?.assignee ?? "both";
     await ctx.db.insert("activities", {
       createdAt: Date.now(),
       actor: "agent",
@@ -52,8 +53,8 @@ export const setStatus = mutation({
       type: "task",
       action: `Task-Status: ${status}`,
       details: task?.title,
-      metadata: JSON.stringify({ taskId }),
-      searchable: `task status ${status} ${task?.title ?? ""} automation agent`,
+      metadata: JSON.stringify({ taskId, assignee }),
+      searchable: `task status ${status} ${task?.title ?? ""} ${assignee} automation agent`,
     });
   },
 });

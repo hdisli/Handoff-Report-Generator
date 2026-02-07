@@ -24,3 +24,4 @@
   - Keine Weitergabe privater Daten.
 - Nightly-Build-Wunsch (ab 2026-02-08): Jeden Tag um 01:00 (Europe/Berlin) genau eine hilfreiche (nicht unnötig kleine), in einer Nacht umsetzbare Verbesserung bauen – Fokus auf bessere Zusammenarbeit (nicht nur Projekt-Features); erst umsetzen/zeigen, dann ausschließlich als PR zur Review (kein Direkt-Merge in main).
 - Arbeitsmodus-Wunsch (ab 2026-02-08): allgemein proaktiv handeln und Initiative übernehmen, ohne auf explizite Prompts zu warten (innerhalb der vereinbarten Sicherheits-/Freigaberegeln).
+- Sondersprint-Vorgabe (2026-02-08): Owl Live Ops Cockpit heute ab 04:00 stündlich weiterbauen (05:00, 06:00, 07:00, …) bis fertig; 01:00-Nightly-Überraschungsaufgabe bleibt separat bestehen.

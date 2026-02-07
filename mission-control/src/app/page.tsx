@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -168,6 +168,7 @@ export default function Home() {
   const [selectedDay, setSelectedDay] = useState<string>("");
   const [expandedTaskId, setExpandedTaskId] = useState<string>("");
   const [expandedApprovalId, setExpandedApprovalId] = useState<string>("");
+  const [highlightApprovalId, setHighlightApprovalId] = useState<string>("");
   const [expandedQueueId, setExpandedQueueId] = useState<string>("");
   const effectiveSelectedDay = selectedDay || tasksByDay[0]?.key || "";
   const selectedBucket = tasksByDay.find((b) => b.key === effectiveSelectedDay) ?? tasksByDay[0];
@@ -228,6 +229,7 @@ export default function Home() {
 
   function openApprovalById(approvalId: string) {
     setExpandedApprovalId(approvalId);
+    setHighlightApprovalId(approvalId);
     const el = document.getElementById("approvals-section");
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -257,6 +259,12 @@ export default function Home() {
       // ignore invalid metadata
     }
   }
+
+  useEffect(() => {
+    if (!highlightApprovalId) return;
+    const t = setTimeout(() => setHighlightApprovalId(""), 1600);
+    return () => clearTimeout(t);
+  }, [highlightApprovalId]);
 
   return (
     <div className="min-h-screen bg-zinc-100 p-6 text-zinc-900">
@@ -522,7 +530,10 @@ export default function Home() {
               {approvals.map((a) => {
                 const expanded = expandedApprovalId === a._id;
                 return (
-                  <div key={a._id} className={`rounded border p-2 text-sm ${expanded ? "border-black" : ""}`}>
+                  <div
+                    key={a._id}
+                    className={`rounded border p-2 text-sm transition-all ${expanded ? "border-black" : ""} ${highlightApprovalId === a._id ? "border-amber-400 bg-amber-50 ring-2 ring-amber-300" : ""}`}
+                  >
                     <p className="font-medium">{a.title}</p>
                     <p className="text-xs text-zinc-500">{a.platform} · {a.status}</p>
                     <button className="mt-2 rounded border px-2 py-1 text-xs" onClick={() => setExpandedApprovalId(expanded ? "" : (a._id as string))}>

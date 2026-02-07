@@ -21,3 +21,4 @@
   - Keine riskanten/destruktiven Änderungen ohne Rückfrage.
   - Keine Weitergabe privater Daten.
 - Nightly-Build-Wunsch (ab 2026-02-08): Jeden Tag um 23:00 (Europe/Berlin) genau eine hilfreiche (nicht unnötig kleine), in einer Nacht umsetzbare Verbesserung bauen – Fokus auf bessere Zusammenarbeit (nicht nur Projekt-Features); erst umsetzen/zeigen, dann ausschließlich als PR zur Review (kein Direkt-Merge in main).
+- Arbeitsmodus-Wunsch (ab 2026-02-08): allgemein proaktiv handeln und Initiative übernehmen, ohne auf explizite Prompts zu warten (innerhalb der vereinbarten Sicherheits-/Freigaberegeln).

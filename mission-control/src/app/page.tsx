@@ -569,11 +569,7 @@ export default function Home() {
                     <button className="rounded border border-emerald-700 bg-emerald-600 px-1 text-xs font-semibold text-white" onClick={() => setQueueStatus({ id: q._id as never, status: "published" })} disabled={!canEdit}>Veröffentlicht</button>
                     <button
                       className="rounded border px-1 text-xs"
-                      onClick={() => {
-                        const msg = window.prompt("Fehlerdetails", q.errorMessage ?? "");
-                        if (msg === null) return;
-                        setQueueStatus({ id: q._id as never, status: "failed", errorMessage: msg || "Unbekannter Fehler" });
-                      }}
+                      onClick={() => setQueueStatus({ id: q._id as never, status: "failed", errorMessage: q.errorMessage ?? "Manuell als Fehler markiert" })}
                       disabled={!canEdit}
                     >
                       Fehler

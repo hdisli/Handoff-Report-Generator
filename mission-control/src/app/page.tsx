@@ -55,6 +55,16 @@ type AgentRunEvent = {
   message: string;
 };
 
+type ControlAction = {
+  _id: string;
+  runId?: string;
+  commandId?: string;
+  action: "pause" | "resume" | "stop" | "retry" | "prioritize";
+  triggeredBy: string;
+  ts: number;
+  reason?: string;
+};
+
 type LiveOpsSnapshot = {
   globalStatus: "idle" | "thinking" | "coding" | "blocked";
   counts: Record<CommandStatus, number>;
@@ -212,6 +222,8 @@ export default function Home() {
     api.commandQueue.listRunEvents,
     effectiveRunId ? { runId: effectiveRunId, limit: 60 } : "skip",
   ) ?? []) as AgentRunEvent[];
+  const rawControlActions = useQuery(api.commandQueue.listControlActions, { limit: 40 });
+  const controlActions = useMemo(() => (rawControlActions ?? []) as ControlAction[], [rawControlActions]);
 
   const liveAgentCards = useMemo(() => {
     const scopes: CommandScope[] = ["main", "subagent", "hybrid"];
@@ -225,6 +237,11 @@ export default function Home() {
       };
     });
   }, [commandQueue]);
+
+  const visibleControlActions = useMemo(() => {
+    if (!effectiveRunId) return controlActions.slice(0, 10);
+    return controlActions.filter((action) => action.runId === effectiveRunId).slice(0, 10);
+  }, [controlActions, effectiveRunId]);
 
   const logActivity = useMutation(api.activities.log);
   const removeActivity = useMutation(api.activities.remove);
@@ -587,7 +604,7 @@ export default function Home() {
               })}
             </div>
 
-            <div className="max-h-[360px] space-y-2 overflow-auto">
+            <div className="max-h-[280px] space-y-2 overflow-auto">
               {runEvents.length === 0 ? (
                 <p className="text-sm text-zinc-500">Noch keine Events.</p>
               ) : (
@@ -601,6 +618,28 @@ export default function Home() {
                   </div>
                 ))
               )}
+            </div>
+
+            <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Audit-Trail (Controls)</p>
+                <p className="text-xs text-zinc-500">{effectiveRunId ? "gefiltert auf aktuellen Run" : "letzte globalen Aktionen"}</p>
+              </div>
+              <div className="max-h-[160px] space-y-2 overflow-auto">
+                {visibleControlActions.length === 0 ? (
+                  <p className="text-xs text-zinc-500">Noch keine Control-Aktionen.</p>
+                ) : (
+                  visibleControlActions.map((action) => (
+                    <div key={action._id} className="rounded border border-zinc-200 bg-white p-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">{action.action}</span>
+                        <span className="text-xs text-zinc-500">{new Date(action.ts).toLocaleTimeString("de-DE")}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-zinc-600">{action.triggeredBy}{action.reason ? ` · ${action.reason}` : ""}</p>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </article>
         </section>

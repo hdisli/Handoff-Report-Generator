@@ -280,3 +280,21 @@
 
 ### Nächster Schritt (17:00)
 - Nach bereitgestellter GitHub-Auth: Branch pushen, PR erstellen, Link in Abschlussmeldung setzen und anschließend den Sprint-Cron `6ae8f4f2-164b-4b68-ae67-3bec243dcbb2` deaktivieren/entfernen.
+
+## 2026-02-08 17:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Dashboard (`src/app/page.tsx`) um einen sichtbaren **Audit-Trail für Steueraktionen** erweitert:
+  - neuer Bereich „Audit-Trail (Controls)" direkt in der Live-Timeline-Karte,
+  - zeigt `pause|resume|stop|retry|prioritize` inkl. Zeitstempel, Auslöser und Grund,
+  - filtert automatisch auf den aktuell ausgewählten Run (oder zeigt global die letzten Aktionen, wenn kein Run gewählt ist).
+- Damit ist der in der Spezifikation geforderte Audit-Aspekt jetzt nicht nur im Backend vorhanden, sondern auch operativ im Cockpit einsehbar.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt (**grün** bzgl. Typecheck/Lint; unverändert nur bekannte Warnungen in `convex/_generated/*`).
+
+### Blocker
+- PR-Link weiterhin blockiert durch fehlende GitHub-Authentifizierung auf diesem Host (`gh auth login` oder `GH_TOKEN`).
+
+### Nächster Schritt (18:00)
+- Sobald GitHub-Auth vorhanden ist: Branch pushen, PR erstellen, finalen Link posten und unmittelbar danach den Sprint-Cron `6ae8f4f2-164b-4b68-ae67-3bec243dcbb2` deaktivieren/entfernen.

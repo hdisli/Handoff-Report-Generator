@@ -24,6 +24,7 @@
 - Command-Queue-UI zeigt jetzt `sessionKey` und klickbaren `resultLink` für schnellere Nachverfolgung.
 - Dispatcher + Smoke-Test laden `.env.local` automatisch (Fallback `CONVEX_URL`) und bleiben beim Start-Race gegen Convex robust (Polling-Fehler führen nicht mehr zum Prozessabbruch).
 - Dashboard-Priorisierung für `queued` Commands ohne `runId` repariert: neuer Mutationspfad `prioritizeQueuedCommand`; Audit-Trail (`controlActions`) speichert zusätzlich optional `commandId`.
+- Dashboard-Live-Timeline zeigt jetzt zusätzlich einen sichtbaren Audit-Trail für Control-Aktionen (`pause/resume/stop/retry/prioritize`) inkl. Filter auf den aktuell ausgewählten Run.
 
 ## 2026-02-07
 

@@ -186,3 +186,22 @@
 
 ### Nächster Schritt (13:00)
 - PR wirklich final öffnen (inkl. Link), MVP-DoD final abhaken und dann den stündlichen Sprint-Cron sauber deaktivieren.
+
+## 2026-02-08 13:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Neuer Live-Rückkanal für den globalen Cockpit-Zustand implementiert:
+  - `convex/commandQueue.ts`: neue Query `liveOpsSnapshot` liefert `globalStatus` (`idle|thinking|coding|blocked`), Status-Zähler (`queued/running/paused/done/failed/canceled`) und aktive Run-Anzahl.
+- Dashboard (`src/app/page.tsx`) um **Owl Body Status** ergänzt:
+  - farbiger Live-Indikator aus dem Snapshot (rot=blocked, amber=coding, blau=thinking, grau=idle),
+  - kompakte Echtzeit-Zähler für Queue/Run-Status,
+  - aktive Runs direkt sichtbar ohne manuellen Timeline-Wechsel.
+- Dokumentation aktualisiert:
+  - `CHANGELOG.md` um Snapshot+Widget ergänzt.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt (**grün**, nur bekannte Warnungen in `convex/_generated/*`).
+- UI-Sanity: Bei statuswechselnden Runs aktualisiert sich das Owl-Status-Widget ohne Refresh über Convex-Livequery.
+
+### Nächster Schritt (14:00)
+- PR-Link final liefern, MVP-DoD in `OWL_LIVE_OPS_E2E.md` final abhaken und bei bestätigter Fertigstellung den stündlichen Sprint-Cron deaktivieren.

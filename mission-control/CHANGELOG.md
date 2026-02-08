@@ -14,6 +14,7 @@
 - Dispatcher verarbeitet `pause/resume` jetzt aktiv über Prozesssignale (SIGSTOP/SIGCONT) und schreibt dazu Live-Feedback-Events.
 - Neue Scripts `npm run owl:dispatcher`, `npm run owl:e2e:smoke` und `npm run dev:ops` (Web + Convex + Dispatcher).
 - Live-Agent-Karten im Dashboard (main/subagent/hybrid) mit Scope-Status + aktiver Run-Anzahl als schneller Main/Subagent-Überblick.
+- Neues Convex-Live-Snapshot `commandQueue.liveOpsSnapshot` + „Owl Body Status“-Widget im Dashboard (Globalstatus + Queue-Zähler + aktive Runs) als kompakter Live-Rückkanal.
 
 ### Updated
 - README um die neue Handoff-/Smoke-Check-Nutzung ergänzt.

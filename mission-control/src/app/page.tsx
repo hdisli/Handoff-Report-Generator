@@ -55,6 +55,15 @@ type AgentRunEvent = {
   message: string;
 };
 
+type LiveOpsSnapshot = {
+  globalStatus: "idle" | "thinking" | "coding" | "blocked";
+  counts: Record<CommandStatus, number>;
+  activeRuns: number;
+  latestRun: CommandQueueItem | null;
+  recentFailures: CommandQueueItem[];
+  lastUpdateTs: number;
+};
+
 type SearchResult = {
   activities: Activity[];
   tasks: Task[];
@@ -112,6 +121,13 @@ const priorityLabel: Record<CommandPriority, string> = {
   normal: "Normal",
   high: "High",
   urgent: "Urgent",
+};
+
+const liveStatusLabel: Record<LiveOpsSnapshot["globalStatus"], string> = {
+  idle: "Idle",
+  thinking: "Thinking",
+  coding: "Coding",
+  blocked: "Blocked",
 };
 
 function getWeekWindow(offsetWeeks: number) {
@@ -184,6 +200,7 @@ export default function Home() {
   const queue = (useQuery(api.postQueue.list, { status: "all", limit: 30 }) ?? []) as QueueItem[];
   const rawCommandQueue = useQuery(api.commandQueue.list, { status: "all", limit: 40 });
   const commandQueue = useMemo(() => (rawCommandQueue ?? []) as CommandQueueItem[], [rawCommandQueue]);
+  const liveOpsSnapshot = (useQuery(api.commandQueue.liveOpsSnapshot, {}) ?? null) as LiveOpsSnapshot | null;
   const effectiveRunId =
     selectedRunId || commandQueue.find((item) => item.runId && (item.status === "running" || item.status === "paused"))?.runId || commandQueue.find((item) => item.runId)?.runId || "";
   const search = (useQuery(api.search.global, { term: queryTerm }) ?? {
@@ -514,6 +531,33 @@ export default function Home() {
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Live-Timeline</h2>
               <p className="text-xs text-zinc-500">{effectiveRunId || "Kein Run gewählt"}</p>
+            </div>
+
+            <div className="mb-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Owl Body Status</p>
+              <div className="mt-2 flex items-center gap-3">
+                <span
+                  className={`inline-block h-4 w-4 rounded-full ${
+                    liveOpsSnapshot?.globalStatus === "blocked"
+                      ? "bg-rose-500"
+                      : liveOpsSnapshot?.globalStatus === "coding"
+                        ? "bg-amber-500"
+                        : liveOpsSnapshot?.globalStatus === "thinking"
+                          ? "bg-sky-500"
+                          : "bg-zinc-400"
+                  }`}
+                />
+                <p className="text-sm font-medium">{liveStatusLabel[liveOpsSnapshot?.globalStatus ?? "idle"]}</p>
+                <p className="text-xs text-zinc-600">Aktiv: {liveOpsSnapshot?.activeRuns ?? 0}</p>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-1 text-xs text-zinc-600">
+                <span>Queued: {liveOpsSnapshot?.counts.queued ?? 0}</span>
+                <span>Running: {liveOpsSnapshot?.counts.running ?? 0}</span>
+                <span>Paused: {liveOpsSnapshot?.counts.paused ?? 0}</span>
+                <span>Done: {liveOpsSnapshot?.counts.done ?? 0}</span>
+                <span>Failed: {liveOpsSnapshot?.counts.failed ?? 0}</span>
+                <span>Canceled: {liveOpsSnapshot?.counts.canceled ?? 0}</span>
+              </div>
             </div>
 
             <div className="mb-4 space-y-2">

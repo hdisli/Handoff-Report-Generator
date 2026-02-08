@@ -83,6 +83,47 @@ export const list = query({
   },
 });
 
+export const liveOpsSnapshot = query({
+  args: {},
+  handler: async (ctx) => {
+    const recent = await ctx.db.query("commandQueue").withIndex("by_createdAt").order("desc").take(120);
+    const runs = await ctx.db.query("agentRuns").withIndex("by_status_startedAt", (q) => q.eq("status", "running")).collect();
+
+    const counts = {
+      queued: 0,
+      running: 0,
+      paused: 0,
+      done: 0,
+      failed: 0,
+      canceled: 0,
+    };
+
+    for (const row of recent) {
+      counts[row.status] += 1;
+    }
+
+    const latestRun = recent.find((row) => !!row.runId) ?? null;
+    const recentFailures = recent.filter((row) => row.status === "failed").slice(0, 3);
+
+    const globalStatus = counts.failed > 0
+      ? "blocked"
+      : counts.running > 0
+        ? "coding"
+        : counts.queued > 0
+          ? "thinking"
+          : "idle";
+
+    return {
+      globalStatus,
+      counts,
+      activeRuns: runs.length,
+      latestRun,
+      recentFailures,
+      lastUpdateTs: Date.now(),
+    };
+  },
+});
+
 export const takeNextQueued = mutation({
   args: {
     dispatcher: v.string(),

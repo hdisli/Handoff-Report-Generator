@@ -125,3 +125,27 @@
 
 ### Nächster Schritt (10:00)
 - E2E-Nachweis für vollständige MVP-Definition-of-Done dokumentieren: ein echter Run inkl. Pause/Resume/Stop/Retry als reproduzierbarer Testablauf mit klaren Schritten für Hasan (inkl. PR-Referenz).
+
+## 2026-02-08 10:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Neuer automatischer Smoke-Test `scripts/owl-e2e-smoke.mjs`:
+  - führt die Bridge reproduzierbar durch: `enqueue -> done -> retry -> done`
+  - nutzt echten Dispatcher (`scripts/owl-dispatcher.mjs --once`) statt Mock
+  - validiert final `status=done` und `retryCount >= 1`
+- Neues Test-/Abnahme-Dokument `OWL_LIVE_OPS_E2E.md` mit vollständigem manuellen E2E-Ablauf für:
+  - `queued -> running -> done`
+  - `pause/resume`
+  - `stop`
+  - `retry`
+  - inkl. klarer MVP-DoD-Checkliste
+- NPM-Script hinzugefügt:
+  - `npm run owl:e2e:smoke`
+- README + CHANGELOG für den neuen E2E-Nachweis aktualisiert.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt (**grün**).
+- `npm run owl:e2e:smoke -- --help` ausgeführt (CLI-Interface des Smoke-Tests validiert).
+
+### Nächster Schritt (11:00)
+- Vollständigen lokalen End-to-End-Lauf mit laufendem `dev:ops` aufzeichnen (Output-Snippets + ggf. Screenshot) und anschließend PR finalisieren (Link in Status/Abschlussmeldung an Hasan).

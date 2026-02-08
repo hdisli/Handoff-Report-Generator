@@ -12,7 +12,7 @@
 - Neue Convex-Endpunkte `getRunContext` + `attachRunSession` für Run-Steuerung/Rückkanal.
 - Dashboard-Run-Steuerung für `pause/resume/stop`, `retry`, `prioritize` in der Command-Queue.
 - Dispatcher verarbeitet `pause/resume` jetzt aktiv über Prozesssignale (SIGSTOP/SIGCONT) und schreibt dazu Live-Feedback-Events.
-- Neue Scripts `npm run owl:dispatcher` und `npm run dev:ops` (Web + Convex + Dispatcher).
+- Neue Scripts `npm run owl:dispatcher`, `npm run owl:e2e:smoke` und `npm run dev:ops` (Web + Convex + Dispatcher).
 
 ### Updated
 - README um die neue Handoff-/Smoke-Check-Nutzung ergänzt.

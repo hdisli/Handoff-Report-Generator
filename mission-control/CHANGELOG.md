@@ -16,6 +16,7 @@
 - Live-Agent-Karten im Dashboard (main/subagent/hybrid) mit Scope-Status + aktiver Run-Anzahl als schneller Main/Subagent-Überblick.
 - Neues Convex-Live-Snapshot `commandQueue.liveOpsSnapshot` + „Owl Body Status“-Widget im Dashboard (Globalstatus + Queue-Zähler + aktive Runs) als kompakter Live-Rückkanal.
 - Neues Verifikationsscript `scripts/owl-mvp-verify.mjs` + npm-Command `owl:mvp:verify`, das MVP-DoD-Kriterien direkt gegen den aktuellen Convex-Run-Verlauf prüft.
+- `owl:mvp:verify` unterstützt jetzt `--waitForBackendMs`, damit Verifikation auch direkt beim Hochfahren von Convex robust automatisiert werden kann.
 - Neues Script `scripts/owl-pr-readiness.mjs` + npm-Command `owl:pr:ready` als PR-Blocker-Check (Working Tree, Upstream, GitHub-Auth) mit klaren Next-Commands.
 
 ### Updated
@@ -25,6 +26,7 @@
 - Dispatcher + Smoke-Test laden `.env.local` automatisch (Fallback `CONVEX_URL`) und bleiben beim Start-Race gegen Convex robust (Polling-Fehler führen nicht mehr zum Prozessabbruch).
 - Dashboard-Priorisierung für `queued` Commands ohne `runId` repariert: neuer Mutationspfad `prioritizeQueuedCommand`; Audit-Trail (`controlActions`) speichert zusätzlich optional `commandId`.
 - Dashboard-Live-Timeline zeigt jetzt zusätzlich einen sichtbaren Audit-Trail für Control-Aktionen (`pause/resume/stop/retry/prioritize`) inkl. Filter auf den aktuell ausgewählten Run.
+- `owl:mvp:verify` liefert bei nicht erreichbarem Convex-Backend nun eine klare, handlungsorientierte Fehlermeldung (inkl. Start-Hinweis) statt unklarem Stacktrace.
 
 ## 2026-02-07
 

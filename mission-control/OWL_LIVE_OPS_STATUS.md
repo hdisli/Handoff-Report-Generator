@@ -298,3 +298,25 @@
 
 ### Nächster Schritt (18:00)
 - Sobald GitHub-Auth vorhanden ist: Branch pushen, PR erstellen, finalen Link posten und unmittelbar danach den Sprint-Cron `6ae8f4f2-164b-4b68-ae67-3bec243dcbb2` deaktivieren/entfernen.
+
+## 2026-02-08 18:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Verifikationspfad robuster gemacht, damit der MVP-Check beim Ops-Start nicht mehr wegen Race-Conditions scheitert:
+  - `scripts/owl-mvp-verify.mjs` unterstützt jetzt `--waitForBackendMs <n>` (pollt auf Convex-Verfügbarkeit, bevor DoD geprüft wird).
+  - Fehlerdiagnose verbessert: bei `ECONNREFUSED` wird jetzt eine klare Handlungsanweisung ausgegeben (z. B. `npm run dev:ops`/`npx convex dev`) statt eines rohen Stacktraces.
+  - `--json` liefert auch bei Fehlern ein strukturiertes Ergebnis (`ready:false`, `error`), damit nachgelagerte Automationen den Zustand sauber auswerten können.
+- Doku aktualisiert:
+  - `README.md` um `--waitForBackendMs` + Diagnoseverhalten ergänzt.
+  - `CHANGELOG.md` erweitert.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt (**grün**).
+- `npm run owl:mvp:verify -- --help` ausgeführt (neue Option sichtbar).
+- `npm run owl:mvp:verify -- --json` ohne laufendes Convex geprüft: erwarteter, klarer Fehlertext statt Fetch-Stacktrace.
+
+### Blocker
+- PR-Link weiterhin blockiert durch fehlende GitHub-Authentifizierung auf diesem Host (`gh auth login` oder `GH_TOKEN`).
+
+### Nächster Schritt (19:00)
+- Unmittelbar nach Auth-Freigabe: `owl:pr:ready` + Push + PR-Link erzeugen; danach bei bestätigter MVP-Fertigstellung den Sprint-Cron `6ae8f4f2-164b-4b68-ae67-3bec243dcbb2` deaktivieren.

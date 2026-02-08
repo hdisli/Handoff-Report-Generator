@@ -42,10 +42,39 @@ function hasAction(actions, action) {
   return actions.some((item) => item.action === action);
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function extractErrorMessage(error) {
+  if (!error) return "Unbekannter Fehler";
+  if (error?.cause?.code === "ECONNREFUSED") {
+    return `Convex nicht erreichbar (${error.cause.address}:${error.cause.port}). Starte zuerst z. B. \`npm run dev:ops\` oder \`npx convex dev\`.`;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
+async function waitForBackendReady(client, waitMs) {
+  const deadline = Date.now() + waitMs;
+  let lastError = null;
+
+  while (Date.now() < deadline) {
+    try {
+      await client.query("commandQueue:list", { status: "all", limit: 1 });
+      return;
+    } catch (error) {
+      lastError = error;
+      await sleep(1000);
+    }
+  }
+
+  throw lastError ?? new Error("Convex-Backend blieb unerreichbar.");
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.has("--help")) {
-    console.log("Owl MVP Verify\n\nPrüft den aktuellen Convex-Stand gegen die MVP-DoD-Checks.\n\nOptionen:\n  --limit <n>      Anzahl Queue-Einträge (Default: 80)\n  --json           JSON-Ausgabe statt Text\n");
+    console.log("Owl MVP Verify\n\nPrüft den aktuellen Convex-Stand gegen die MVP-DoD-Checks.\n\nOptionen:\n  --limit <n>              Anzahl Queue-Einträge (Default: 80)\n  --waitForBackendMs <n>   Wartet bis zu n ms auf Convex (Default: 0 = sofort)\n  --json                   JSON-Ausgabe statt Text\n");
     return;
   }
 
@@ -55,48 +84,67 @@ async function main() {
   if (!convexUrl) throw new Error("NEXT_PUBLIC_CONVEX_URL fehlt.");
 
   const limit = Number(args.get("--limit") ?? 80);
+  const waitForBackendMs = Number(args.get("--waitForBackendMs") ?? 0);
   const client = new ConvexHttpClient(convexUrl);
 
-  const rows = await client.query("commandQueue:list", { status: "all", limit });
-  const runIds = Array.from(new Set(rows.map((row) => row.runId).filter(Boolean)));
+  try {
+    if (waitForBackendMs > 0) {
+      await waitForBackendReady(client, waitForBackendMs);
+    }
 
-  const eventsByRun = new Map();
-  for (const runId of runIds) {
-    const events = await client.query("commandQueue:listRunEvents", { runId, limit: 120 });
-    eventsByRun.set(runId, events);
+    const rows = await client.query("commandQueue:list", { status: "all", limit });
+    const runIds = Array.from(new Set(rows.map((row) => row.runId).filter(Boolean)));
+
+    const eventsByRun = new Map();
+    for (const runId of runIds) {
+      const events = await client.query("commandQueue:listRunEvents", { runId, limit: 120 });
+      eventsByRun.set(runId, events);
+    }
+
+    const controlActions = await client.query("commandQueue:listControlActions", { limit: 400 });
+
+    const checks = {
+      realRun: rows.some((row) => row.status === "done" && !!row.runId),
+      liveEvents: Array.from(eventsByRun.values()).some((events) => events.length > 0),
+      stopRetry: hasAction(controlActions, "stop") && hasAction(controlActions, "retry"),
+      pauseResume: hasAction(controlActions, "pause") && hasAction(controlActions, "resume"),
+      resultVisible: rows.some((row) => row.status === "done" && !!row.resultSummary && !!row.resultLink),
+    };
+
+    const summary = {
+      checkedAt: new Date().toISOString(),
+      queueSize: rows.length,
+      runCount: runIds.length,
+      checks,
+      ready: Object.values(checks).every(Boolean),
+    };
+
+    if (args.has("--json")) {
+      console.log(JSON.stringify(summary, null, 2));
+      return;
+    }
+
+    const line = (ok) => (ok ? "✅" : "❌");
+    console.log(`Owl MVP Verify (${summary.checkedAt})`);
+    console.log(`${line(checks.realRun)} UI-Eintrag startet realen Agent-Run`);
+    console.log(`${line(checks.liveEvents)} Event-Stream liefert Live-Events`);
+    console.log(`${line(checks.stopRetry)} Stop + Retry in Event-Historie gefunden`);
+    console.log(`${line(checks.pauseResume)} Pause + Resume in Event-Historie gefunden`);
+    console.log(`${line(checks.resultVisible)} Ergebnis-Link + Summary vorhanden`);
+    console.log(`\nGesamtstatus: ${summary.ready ? "MVP-DoD erfüllt" : "MVP-DoD noch unvollständig"}`);
+  } catch (error) {
+    const message = extractErrorMessage(error);
+    if (args.has("--json")) {
+      console.log(JSON.stringify({
+        checkedAt: new Date().toISOString(),
+        ready: false,
+        error: message,
+      }, null, 2));
+    } else {
+      console.error(`Owl MVP Verify fehlgeschlagen: ${message}`);
+    }
+    process.exit(1);
   }
-
-  const controlActions = await client.query("commandQueue:listControlActions", { limit: 400 });
-
-  const checks = {
-    realRun: rows.some((row) => row.status === "done" && !!row.runId),
-    liveEvents: Array.from(eventsByRun.values()).some((events) => events.length > 0),
-    stopRetry: hasAction(controlActions, "stop") && hasAction(controlActions, "retry"),
-    pauseResume: hasAction(controlActions, "pause") && hasAction(controlActions, "resume"),
-    resultVisible: rows.some((row) => row.status === "done" && !!row.resultSummary && !!row.resultLink),
-  };
-
-  const summary = {
-    checkedAt: new Date().toISOString(),
-    queueSize: rows.length,
-    runCount: runIds.length,
-    checks,
-    ready: Object.values(checks).every(Boolean),
-  };
-
-  if (args.has("--json")) {
-    console.log(JSON.stringify(summary, null, 2));
-    return;
-  }
-
-  const line = (ok) => (ok ? "✅" : "❌");
-  console.log(`Owl MVP Verify (${summary.checkedAt})`);
-  console.log(`${line(checks.realRun)} UI-Eintrag startet realen Agent-Run`);
-  console.log(`${line(checks.liveEvents)} Event-Stream liefert Live-Events`);
-  console.log(`${line(checks.stopRetry)} Stop + Retry in Event-Historie gefunden`);
-  console.log(`${line(checks.pauseResume)} Pause + Resume in Event-Historie gefunden`);
-  console.log(`${line(checks.resultVisible)} Ergebnis-Link + Summary vorhanden`);
-  console.log(`\nGesamtstatus: ${summary.ready ? "MVP-DoD erfüllt" : "MVP-DoD noch unvollständig"}`);
 }
 
 main().catch((error) => {

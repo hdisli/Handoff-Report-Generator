@@ -53,6 +53,7 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
 - `npm run owl:dispatcher -- --once` triggert genau einen Poll-Zyklus (ideal für E2E-Smoketest der Bridge).
 - `npm run owl:e2e:smoke` führt den reproduzierbaren Smoke-Test `enqueue -> done -> retry -> done` gegen Convex + echten Dispatcher aus.
 - `npm run owl:mvp:verify` prüft die MVP-DoD-Checks direkt gegen den aktuellen Convex-Run-Verlauf (inkl. stop/retry, pause/resume, Ergebnis-Link).
+  - Optional: `--waitForBackendMs <ms>` wartet auf ein startendes Convex-Backend (hilfreich direkt nach `dev:ops`-Start).
 - `npm run owl:pr:ready` prüft PR-Bereitschaft (Git-Status, Upstream, `gh`-Auth) und gibt die nächsten Push/PR-Kommandos aus.
 - `npm run handoff` erzeugt einen kompakten Handoff-Report (Diff, Risiko-Signale, Review-Fokus, TODOs) im Terminal.
 - `npm run handoff:write` schreibt denselben Report nach `HANDOFF_REPORT.md` (praktisch für PR-Beschreibungen).
@@ -70,6 +71,7 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
   - `OWL_SUBAGENT_AGENT_ID`
   - `OWL_HYBRID_AGENT_ID`
 - Dispatcher/Smoke-Test laden `.env.local` jetzt automatisch (Fallback `CONVEX_URL`), deshalb funktioniert `npm run dev:ops` ohne extra ENV-Exports.
+- `owl:mvp:verify` gibt bei fehlendem Backend jetzt eine klare Diagnose mit Startbefehl statt nur einem rohen Fetch-Stacktrace.
 - Für Standalone-Dispatcher-Starts kann die URL weiterhin explizit gesetzt werden, z. B.:
   - `NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210 npm run owl:dispatcher -- --once`
 - Nach Schema-Änderungen bitte `npm run dev:backend` (oder `npm run dev:all`) laufen lassen, damit Indizes/Typen aktualisiert werden.

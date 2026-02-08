@@ -5,6 +5,8 @@
 ### Added
 - `handoff-report` erkennt jetzt automatische Risiko-Signale (z. B. Schema-/Config-/Dependency-Änderungen, große Diffs) für schnellere PR-Reviews.
 - Optionaler Smoke-Check via `--smoke-cmd`, damit Handoffs direkt ein kurzes Test-Ergebnis mitführen.
+- Owl Live Ops MVP Phase 1: neues Convex-Datenmodell (`commandQueue`, `agentRuns`, `agentRunEvents`, `controlActions`) inkl. Status-/Audit-Felder für echte Agent-Runs.
+- Neue Convex-Bridge-Basics in `convex/commandQueue.ts`: Queue-Ingestion, Dispatcher-Locking (`takeNextQueued`), Live-Run-Events, Statusabschluss und Control-Aktionen (pause/resume/stop/retry/prioritize).
 
 ### Updated
 - README um die neue Handoff-/Smoke-Check-Nutzung ergänzt.

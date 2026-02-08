@@ -182,7 +182,8 @@ export default function Home() {
   const tasks = useMemo(() => (rawTasks ?? []) as Task[], [rawTasks]);
   const approvals = (useQuery(api.approvals.list, { status: "all", limit: 30 }) ?? []) as Approval[];
   const queue = (useQuery(api.postQueue.list, { status: "all", limit: 30 }) ?? []) as QueueItem[];
-  const commandQueue = (useQuery(api.commandQueue.list, { status: "all", limit: 40 }) ?? []) as CommandQueueItem[];
+  const rawCommandQueue = useQuery(api.commandQueue.list, { status: "all", limit: 40 });
+  const commandQueue = useMemo(() => (rawCommandQueue ?? []) as CommandQueueItem[], [rawCommandQueue]);
   const effectiveRunId =
     selectedRunId || commandQueue.find((item) => item.runId && (item.status === "running" || item.status === "paused"))?.runId || commandQueue.find((item) => item.runId)?.runId || "";
   const search = (useQuery(api.search.global, { term: queryTerm }) ?? {
@@ -194,6 +195,19 @@ export default function Home() {
     api.commandQueue.listRunEvents,
     effectiveRunId ? { runId: effectiveRunId, limit: 60 } : "skip",
   ) ?? []) as AgentRunEvent[];
+
+  const liveAgentCards = useMemo(() => {
+    const scopes: CommandScope[] = ["main", "subagent", "hybrid"];
+    return scopes.map((scope) => {
+      const recent = commandQueue.find((cmd) => cmd.scope === scope && !!cmd.runId);
+      const running = commandQueue.filter((cmd) => cmd.scope === scope && (cmd.status === "running" || cmd.status === "paused")).length;
+      return {
+        scope,
+        recent,
+        running,
+      };
+    });
+  }, [commandQueue]);
 
   const logActivity = useMutation(api.activities.log);
   const removeActivity = useMutation(api.activities.remove);
@@ -501,6 +515,24 @@ export default function Home() {
               <h2 className="text-lg font-semibold">Live-Timeline</h2>
               <p className="text-xs text-zinc-500">{effectiveRunId || "Kein Run gewählt"}</p>
             </div>
+
+            <div className="mb-4 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Agent-Karten</p>
+              {liveAgentCards.map((card) => {
+                const status = card.recent?.status ?? "queued";
+                return (
+                  <div key={card.scope} className="rounded border border-zinc-200 bg-zinc-50 p-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{card.scope}</p>
+                      <span className={`rounded px-2 py-0.5 text-xs font-semibold ${status === "done" ? "bg-emerald-100 text-emerald-800" : status === "failed" ? "bg-rose-100 text-rose-700" : status === "running" ? "bg-amber-100 text-amber-800" : status === "paused" ? "bg-violet-100 text-violet-700" : "bg-zinc-100 text-zinc-700"}`}>{commandStatusLabel[status]}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-600 line-clamp-1">{card.recent?.title ?? "Noch kein Run"}</p>
+                    <p className="text-xs text-zinc-500">Aktive Runs: {card.running}</p>
+                  </div>
+                );
+              })}
+            </div>
+
             <div className="max-h-[360px] space-y-2 overflow-auto">
               {runEvents.length === 0 ? (
                 <p className="text-sm text-zinc-500">Noch keine Events.</p>

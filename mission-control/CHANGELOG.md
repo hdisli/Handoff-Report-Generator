@@ -13,6 +13,7 @@
 - Dashboard-Run-Steuerung für `pause/resume/stop`, `retry`, `prioritize` in der Command-Queue.
 - Dispatcher verarbeitet `pause/resume` jetzt aktiv über Prozesssignale (SIGSTOP/SIGCONT) und schreibt dazu Live-Feedback-Events.
 - Neue Scripts `npm run owl:dispatcher`, `npm run owl:e2e:smoke` und `npm run dev:ops` (Web + Convex + Dispatcher).
+- Live-Agent-Karten im Dashboard (main/subagent/hybrid) mit Scope-Status + aktiver Run-Anzahl als schneller Main/Subagent-Überblick.
 
 ### Updated
 - README um die neue Handoff-/Smoke-Check-Nutzung ergänzt.

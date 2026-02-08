@@ -170,3 +170,19 @@
 
 ### Nächster Schritt (12:00)
 - PR-Finalisierung: Branch pushen, PR-Link erzeugen und in die Sprint-Fertigmeldung für Hasan aufnehmen; danach verbleibende MVP-Lücken gegen DoD gegentesten (insb. manuelle UI-Steuerpfade als Nachweis-Screens).
+
+## 2026-02-08 12:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Dashboard in `src/app/page.tsx` um **Live-Agent-Karten** erweitert (main/subagent/hybrid):
+  - zeigt pro Scope den letzten Run mit Status-Badge,
+  - zeigt aktive Run-Anzahl (`running|paused`) pro Scope,
+  - bringt damit den in der Spezifikation geforderten Live-Blick auf Main + Subagents direkt neben die Timeline.
+- Keine Backend-Migration nötig: Karten nutzen bestehende `commandQueue`-Daten, daher sofort mit laufendem Dispatcher wirksam.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt (**grün**, nur bekannte Warnungen in `convex/_generated/*`).
+- UI-Sanity: Bei laufendem/pausiertem Run wechselt Status-Badge in den Karten ohne Refresh.
+
+### Nächster Schritt (13:00)
+- PR wirklich final öffnen (inkl. Link), MVP-DoD final abhaken und dann den stündlichen Sprint-Cron sauber deaktivieren.

@@ -280,6 +280,53 @@ export const listRunEvents = query({
   },
 });
 
+export const listRecentRunEvents = query({
+  args: {
+    limit: v.optional(v.number()),
+    scope: v.optional(v.union(v.literal("all"), v.literal("main"), v.literal("subagent"), v.literal("hybrid"))),
+    severity: v.optional(v.union(v.literal("all"), v.literal("info"), v.literal("warning"), v.literal("error"))),
+  },
+  handler: async (ctx, { limit, scope, severity }) => {
+    const max = Math.min(Math.max(limit ?? 120, 1), 400);
+    const events = await ctx.db.query("agentRunEvents").withIndex("by_ts").order("desc").take(max);
+
+    const runCache = new Map<string, { scope: "main" | "subagent" | "hybrid" } | null>();
+
+    const filtered = [];
+    for (const event of events) {
+      if (severity && severity !== "all" && event.severity !== severity) continue;
+
+      let cached = runCache.get(event.runId);
+      if (cached === undefined) {
+        const run = await ctx.db.query("agentRuns").withIndex("by_runId", (q) => q.eq("runId", event.runId)).first();
+        if (!run) {
+          runCache.set(event.runId, null);
+          continue;
+        }
+
+        const command = await ctx.db.get(run.commandId);
+        if (!command) {
+          runCache.set(event.runId, null);
+          continue;
+        }
+
+        cached = { scope: command.scope };
+        runCache.set(event.runId, cached);
+      }
+
+      if (!cached) continue;
+      if (scope && scope !== "all" && cached.scope !== scope) continue;
+
+      filtered.push({
+        ...event,
+        scope: cached.scope,
+      });
+    }
+
+    return filtered.slice(0, max);
+  },
+});
+
 export const getRunContext = query({
   args: {
     runId: v.string(),

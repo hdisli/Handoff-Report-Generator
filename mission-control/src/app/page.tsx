@@ -53,6 +53,7 @@ type AgentRunEvent = {
   kind: string;
   severity: "info" | "warning" | "error";
   message: string;
+  scope?: CommandScope;
 };
 
 type ControlAction = {
@@ -205,6 +206,8 @@ export default function Home() {
   const [commandScope, setCommandScope] = useState<CommandScope>("hybrid");
   const [commandPriority, setCommandPriority] = useState<CommandPriority>("high");
   const [selectedRunId, setSelectedRunId] = useState("");
+  const [timelineScopeFilter, setTimelineScopeFilter] = useState<"all" | CommandScope>("all");
+  const [timelineSeverityFilter, setTimelineSeverityFilter] = useState<"all" | "info" | "warning" | "error">("all");
 
   const canEdit = role === "owner" || role === "editor";
   const week = useMemo(() => getWeekWindow(weekOffset), [weekOffset]);
@@ -236,6 +239,11 @@ export default function Home() {
     api.commandQueue.listRunEvents,
     effectiveRunId ? { runId: effectiveRunId, limit: 60 } : "skip",
   ) ?? []) as AgentRunEvent[];
+  const recentRunEvents = (useQuery(api.commandQueue.listRecentRunEvents, {
+    limit: 120,
+    scope: timelineScopeFilter,
+    severity: timelineSeverityFilter,
+  }) ?? []) as AgentRunEvent[];
   const rawControlActions = useQuery(api.commandQueue.listControlActions, { limit: 40 });
   const controlActions = useMemo(() => (rawControlActions ?? []) as ControlAction[], [rawControlActions]);
 
@@ -256,6 +264,10 @@ export default function Home() {
     if (!effectiveRunId) return controlActions.slice(0, 10);
     return controlActions.filter((action) => action.runId === effectiveRunId).slice(0, 10);
   }, [controlActions, effectiveRunId]);
+
+  const timelineEvents = effectiveRunId
+    ? runEvents
+    : recentRunEvents;
 
   const logActivity = useMutation(api.activities.log);
   const removeActivity = useMutation(api.activities.remove);
@@ -569,10 +581,26 @@ export default function Home() {
           </article>
 
           <article className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between gap-2">
               <h2 className="text-lg font-semibold">Live-Timeline</h2>
-              <p className="text-xs text-zinc-500">{effectiveRunId || "Kein Run gewählt"}</p>
+              <p className="text-xs text-zinc-500">{effectiveRunId || "Globaler Stream"}</p>
             </div>
+            {!effectiveRunId && (
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                <select className="rounded border px-2 py-1 text-xs" value={timelineScopeFilter} onChange={(e) => setTimelineScopeFilter(e.target.value as "all" | CommandScope)}>
+                  <option value="all">Scope: alle</option>
+                  <option value="main">Scope: main</option>
+                  <option value="subagent">Scope: subagent</option>
+                  <option value="hybrid">Scope: hybrid</option>
+                </select>
+                <select className="rounded border px-2 py-1 text-xs" value={timelineSeverityFilter} onChange={(e) => setTimelineSeverityFilter(e.target.value as "all" | "info" | "warning" | "error")}>
+                  <option value="all">Severity: alle</option>
+                  <option value="info">info</option>
+                  <option value="warning">warning</option>
+                  <option value="error">error</option>
+                </select>
+              </div>
+            )}
 
             <div className="mb-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Owl Body Status</p>
@@ -631,13 +659,16 @@ export default function Home() {
             </div>
 
             <div className="max-h-[280px] space-y-2 overflow-auto">
-              {runEvents.length === 0 ? (
+              {timelineEvents.length === 0 ? (
                 <p className="text-sm text-zinc-500">Noch keine Events.</p>
               ) : (
-                runEvents.map((event) => (
+                timelineEvents.map((event) => (
                   <div key={event._id} className="rounded border border-zinc-200 bg-zinc-50 p-2 text-sm">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`rounded px-2 py-0.5 text-xs font-semibold ${event.severity === "error" ? "bg-rose-100 text-rose-700" : event.severity === "warning" ? "bg-amber-100 text-amber-800" : "bg-sky-100 text-sky-700"}`}>{event.kind}</span>
+                      <div className="flex items-center gap-1">
+                        <span className={`rounded px-2 py-0.5 text-xs font-semibold ${event.severity === "error" ? "bg-rose-100 text-rose-700" : event.severity === "warning" ? "bg-amber-100 text-amber-800" : "bg-sky-100 text-sky-700"}`}>{event.kind}</span>
+                        {!effectiveRunId && event.scope && <span className="rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-700">{event.scope}</span>}
+                      </div>
                       <span className="text-xs text-zinc-500">{new Date(event.ts).toLocaleTimeString("de-DE")}</span>
                     </div>
                     <p className="mt-1 text-xs text-zinc-700">{event.message}</p>

@@ -1,5 +1,22 @@
 # Owl Live Ops Cockpit – Sprint-Status
 
+## 2026-02-08 20:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- **Live-Timeline für Gesamtbetrieb erweitert:** neues Convex-Query `commandQueue.listRecentRunEvents` in `convex/commandQueue.ts` liefert den globalen Event-Stream über alle Runs (inkl. Scope-Anreicherung aus `commandQueue`).
+- Dashboard-Timeline (`src/app/page.tsx`) kann jetzt ohne ausgewählten Run als **globaler Stream** laufen.
+- Neue Filter im Timeline-Panel:
+  - Scope (`all|main|subagent|hybrid`)
+  - Severity (`all|info|warning|error`)
+- Für den globalen Stream wird Scope direkt als Badge am Event angezeigt, damit Main/Subagent/Hybrid-Ereignisse sofort unterscheidbar sind.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt: **grün** (keine Errors; nur bekannte Lint-Warnungen in auto-generierten `convex/_generated/*` Dateien).
+- `npm run owl:mvp:verify` erneut ohne laufendes Convex getestet: erwartete Diagnose „Convex nicht erreichbar … starte `npm run dev:ops`“ bleibt korrekt.
+
+### Nächster Schritt (21:00)
+- E2E-Nachweis mit laufendem `dev:ops`: Queue-Command anlegen, im globalen Stream den Übergang `dispatch -> connector/stdout -> done` dokumentieren und Screenshot + Kurzprotokoll ergänzen.
+
 ## 2026-02-08 19:00 (Europe/Berlin)
 
 ### Geliefert (testbarer Fortschritt)

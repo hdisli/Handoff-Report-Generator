@@ -29,6 +29,7 @@
 - Dashboard-Live-Timeline zeigt jetzt zusätzlich einen sichtbaren Audit-Trail für Control-Aktionen (`pause/resume/stop/retry/prioritize`) inkl. Filter auf den aktuell ausgewählten Run.
 - `owl:mvp:verify` liefert bei nicht erreichbarem Convex-Backend nun eine klare, handlungsorientierte Fehlermeldung (inkl. Start-Hinweis) statt unklarem Stacktrace.
 - Dashboard zeigt im Owl-Body zusätzlich den Dispatcher-Health (online/offline, state, letzte Meldung) als Live-Indikator für die echte Queue->Run-Bridge.
+- Live-Timeline kann jetzt auch als globaler Stream laufen (ohne ausgewählten Run) inkl. Scope-/Severity-Filter und Scope-Badge pro Event.
 
 ## 2026-02-07
 

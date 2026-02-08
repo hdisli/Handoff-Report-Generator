@@ -7,6 +7,8 @@
 - Optionaler Smoke-Check via `--smoke-cmd`, damit Handoffs direkt ein kurzes Test-Ergebnis mitführen.
 - Owl Live Ops MVP Phase 1: neues Convex-Datenmodell (`commandQueue`, `agentRuns`, `agentRunEvents`, `controlActions`) inkl. Status-/Audit-Felder für echte Agent-Runs.
 - Neue Convex-Bridge-Basics in `convex/commandQueue.ts`: Queue-Ingestion, Dispatcher-Locking (`takeNextQueued`), Live-Run-Events, Statusabschluss und Control-Aktionen (pause/resume/stop/retry/prioritize).
+- Neuer Host-Dispatcher `scripts/owl-dispatcher.mjs` für End-to-End-Bridge: Queue-Polling, simulierter Connector und Live-Status-Rückkanal (`queued -> running -> done/failed`).
+- Neue Scripts `npm run owl:dispatcher` und `npm run dev:ops` (Web + Convex + Dispatcher).
 
 ### Updated
 - README um die neue Handoff-/Smoke-Check-Nutzung ergänzt.

@@ -46,9 +46,11 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
 ## Workflow-Kommandos
 
 - `npm run dev:all` startet Next.js + Convex gemeinsam in einem Terminal.
+- `npm run dev:ops` startet Next.js + Convex + Owl Dispatcher (Queue -> Run -> Live-Status) gemeinsam.
 - `npm run dev:web` startet nur das Frontend.
 - `npm run dev:backend` startet nur Convex.
 - `npm run check` führt Lint + Typecheck als Schnellprüfung vor Commits aus.
+- `npm run owl:dispatcher -- --once` triggert genau einen Poll-Zyklus (ideal für E2E-Smoketest der Bridge).
 - `npm run handoff` erzeugt einen kompakten Handoff-Report (Diff, Risiko-Signale, Review-Fokus, TODOs) im Terminal.
 - `npm run handoff:write` schreibt denselben Report nach `HANDOFF_REPORT.md` (praktisch für PR-Beschreibungen).
 - Optionaler Smoke-Check: `node scripts/handoff-report.mjs --smoke-cmd "npm run check"` hängt ein kurzes Pass/Fail-Ergebnis inkl. Ausgabe-Snippet an.

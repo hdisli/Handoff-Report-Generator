@@ -7,13 +7,15 @@
     "dev:web": "next dev",
     "dev:backend": "npx convex dev",
     "dev:all": "bash -lc 'trap \"kill 0\" EXIT; npm run dev:web & npm run dev:backend & wait'",
+    "dev:ops": "bash -lc 'trap \"kill 0\" EXIT; npm run dev:web & npm run dev:backend & npm run owl:dispatcher & wait'",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck",
     "handoff": "node scripts/handoff-report.mjs",
-    "handoff:write": "node scripts/handoff-report.mjs --out HANDOFF_REPORT.md"
+    "handoff:write": "node scripts/handoff-report.mjs --out HANDOFF_REPORT.md",
+    "owl:dispatcher": "node scripts/owl-dispatcher.mjs"
   },
   "dependencies": {
     "convex": "^1.31.7",

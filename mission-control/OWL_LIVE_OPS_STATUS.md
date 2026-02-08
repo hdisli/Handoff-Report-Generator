@@ -39,3 +39,23 @@
 
 ### Nächster Schritt (06:00)
 - Dispatcher-Basis im Host-Prozess verdrahten (Queue-Polling + Locking + Retry-Flow) und mit simuliertem Connector einen echten End-to-End-Lauf (`queued -> running -> done/failed`) über die neue UI nachweisen.
+
+## 2026-02-08 06:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Neuer Host-Dispatcher `scripts/owl-dispatcher.mjs` implementiert:
+  - Polling auf `commandQueue.takeNextQueued` (Locking bereits über atomaren Statuswechsel in Convex)
+  - Simulierter Connector mit Live-Events (`commandQueue.appendRunEvent`)
+  - Abschluss über `commandQueue.setRunState` als `done` oder `failed`
+  - Fail-Simulation über Prompt-Marker `[fail]` / `[error]` für reproduzierbaren Retry-Test
+- Neue NPM-Workflows ergänzt:
+  - `npm run owl:dispatcher`
+  - `npm run dev:ops` (Web + Convex + Dispatcher parallel)
+- README um Dispatcher-Start und `--once`-Smoke-Run erweitert.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt.
+- `npm run owl:dispatcher -- --help` ausgeführt (CLI-Parameter validiert).
+
+### Nächster Schritt (07:00)
+- Simulierten Connector durch echten OpenClaw-Connector ersetzen (Main/Subagent-Start + sessionKey-Rückkanal) und erste echte Steuerbefehle `stop/retry/prio` end-to-end über Dashboard nachweisen.

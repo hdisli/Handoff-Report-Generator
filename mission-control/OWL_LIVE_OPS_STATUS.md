@@ -205,3 +205,31 @@
 
 ### Nächster Schritt (14:00)
 - PR-Link final liefern, MVP-DoD in `OWL_LIVE_OPS_E2E.md` final abhaken und bei bestätigter Fertigstellung den stündlichen Sprint-Cron deaktivieren.
+
+## 2026-02-08 14:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Neuer MVP-DoD-Checker implementiert: `scripts/owl-mvp-verify.mjs`.
+  - prüft direkt aus Convex-Daten den aktuellen Erfüllungsstand der DoD-Kriterien:
+    - realer Run vorhanden,
+    - Live-Events vorhanden,
+    - Stop+Retry nachweisbar,
+    - Pause+Resume nachweisbar,
+    - Ergebnis-Link + Summary vorhanden.
+  - Ausgabe als Klartext oder JSON (`--json`) für Review-/CI-Nutzung.
+- NPM-Command ergänzt: `npm run owl:mvp:verify`.
+- Doku aktualisiert:
+  - `README.md` (neues Workflow-Kommando)
+  - `OWL_LIVE_OPS_E2E.md` (neuer Abschnitt „DoD-Status automatisch verifizieren“)
+  - `CHANGELOG.md`.
+
+### Kurztest
+- `npm run owl:mvp:verify -- --help` ausgeführt (CLI-Interface validiert).
+- `npm run check` ausgeführt (**grün**, nur bekannte Warnungen in `convex/_generated/*`).
+
+### Blocker
+- PR-Link kann aktuell nicht erzeugt werden, da `gh` lokal nicht authentifiziert ist (`gh auth login`/`GH_TOKEN` fehlt).
+- Cron-Deaktivierung erfolgt direkt nach erfolgreicher PR-Erstellung + finaler MVP-Bestätigung.
+
+### Nächster Schritt (15:00)
+- GitHub-Auth herstellen, Branch pushen, PR-Link erzeugen, danach bei bestätigter MVP-Fertigstellung den Sprint-Cron `6ae8f4f2-164b-4b68-ae67-3bec243dcbb2` deaktivieren.

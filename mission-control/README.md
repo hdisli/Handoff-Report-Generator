@@ -52,6 +52,7 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
 - `npm run check` führt Lint + Typecheck als Schnellprüfung vor Commits aus.
 - `npm run owl:dispatcher -- --once` triggert genau einen Poll-Zyklus (ideal für E2E-Smoketest der Bridge).
 - `npm run owl:e2e:smoke` führt den reproduzierbaren Smoke-Test `enqueue -> done -> retry -> done` gegen Convex + echten Dispatcher aus.
+- `npm run owl:mvp:verify` prüft die MVP-DoD-Checks direkt gegen den aktuellen Convex-Run-Verlauf (inkl. stop/retry, pause/resume, Ergebnis-Link).
 - `npm run handoff` erzeugt einen kompakten Handoff-Report (Diff, Risiko-Signale, Review-Fokus, TODOs) im Terminal.
 - `npm run handoff:write` schreibt denselben Report nach `HANDOFF_REPORT.md` (praktisch für PR-Beschreibungen).
 - Optionaler Smoke-Check: `node scripts/handoff-report.mjs --smoke-cmd "npm run check"` hängt ein kurzes Pass/Fail-Ergebnis inkl. Ausgabe-Snippet an.

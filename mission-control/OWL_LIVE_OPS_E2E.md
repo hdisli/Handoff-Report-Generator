@@ -80,6 +80,20 @@ Erwartung:
 - [ ] Pause/Resume funktionieren
 - [ ] Ergebnis-Link + Summary sind sichtbar
 
+## C) DoD-Status automatisch verifizieren
+
+```bash
+npm run owl:mvp:verify
+```
+
+Optional als JSON (für CI/Copy-Paste):
+
+```bash
+npm run owl:mvp:verify -- --json
+```
+
+Hinweis: Dafür muss Convex laufen (`npm run dev:backend` oder `npm run dev:ops`).
+
 ## Hinweise für PR-Review
 
 - Fokusdateien:

@@ -15,6 +15,7 @@
 - Neue Scripts `npm run owl:dispatcher`, `npm run owl:e2e:smoke` und `npm run dev:ops` (Web + Convex + Dispatcher).
 - Live-Agent-Karten im Dashboard (main/subagent/hybrid) mit Scope-Status + aktiver Run-Anzahl als schneller Main/Subagent-Überblick.
 - Neues Convex-Live-Snapshot `commandQueue.liveOpsSnapshot` + „Owl Body Status“-Widget im Dashboard (Globalstatus + Queue-Zähler + aktive Runs) als kompakter Live-Rückkanal.
+- Neues Verifikationsscript `scripts/owl-mvp-verify.mjs` + npm-Command `owl:mvp:verify`, das MVP-DoD-Kriterien direkt gegen den aktuellen Convex-Run-Verlauf prüft.
 
 ### Updated
 - README um die neue Handoff-/Smoke-Check-Nutzung ergänzt.

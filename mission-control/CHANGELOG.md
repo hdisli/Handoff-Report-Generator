@@ -10,7 +10,8 @@
 - Neuer Host-Dispatcher `scripts/owl-dispatcher.mjs` für End-to-End-Bridge: Queue-Polling, simulierter Connector und Live-Status-Rückkanal (`queued -> running -> done/failed`).
 - Echte OpenClaw-Connector-Bridge im Dispatcher (`openclaw agent --local --json`) inkl. sessionKey-Rückkanal, stdout/stderr-Liveevents und Stop-Unterstützung.
 - Neue Convex-Endpunkte `getRunContext` + `attachRunSession` für Run-Steuerung/Rückkanal.
-- Dashboard-Run-Steuerung für `stop`, `retry`, `prioritize` in der Command-Queue.
+- Dashboard-Run-Steuerung für `pause/resume/stop`, `retry`, `prioritize` in der Command-Queue.
+- Dispatcher verarbeitet `pause/resume` jetzt aktiv über Prozesssignale (SIGSTOP/SIGCONT) und schreibt dazu Live-Feedback-Events.
 - Neue Scripts `npm run owl:dispatcher` und `npm run dev:ops` (Web + Convex + Dispatcher).
 
 ### Updated

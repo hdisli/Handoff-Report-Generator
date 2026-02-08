@@ -58,6 +58,7 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
 ## Hinweise
 
 - Dispatcher nutzt `openclaw agent --local --json` als echten Connector.
+- Run-Control im Dashboard: `pause/resume/stop` für laufende Runs sowie `retry/prioritize` für abgeschlossene/queued Runs.
 - Standard-Agent-Mapping ohne zusätzliche ENV-Variablen:
   - `main` → `main`
   - `subagent` / `hybrid` → `swarm-automation`

@@ -37,7 +37,7 @@ function parseAgentJson(rawText) {
   }
 }
 
-async function runAgentCommand({ command, scope, timeoutMs, onStdout, onStderr, signal }) {
+async function runAgentCommand({ command, scope, timeoutMs, onStdout, onStderr, signal, onSpawn }) {
   const args = ["agent", "--local", "--json", "--message", command.prompt];
   const agentMap = {
     main: process.env.OWL_MAIN_AGENT_ID || "main",
@@ -52,6 +52,7 @@ async function runAgentCommand({ command, scope, timeoutMs, onStdout, onStderr, 
       env: process.env,
       stdio: ["ignore", "pipe", "pipe"],
     });
+    onSpawn?.(child);
 
     let stdout = "";
     let stderr = "";
@@ -97,6 +98,8 @@ async function runAgentCommand({ command, scope, timeoutMs, onStdout, onStderr, 
 async function runCommand(client, command, agentName, timeoutMs) {
   const runId = command.runId;
   const runAbort = new AbortController();
+  let childProcess = null;
+  let processPaused = false;
 
   await client.mutation("commandQueue:appendRunEvent", {
     runId,
@@ -111,6 +114,31 @@ async function runCommand(client, command, agentName, timeoutMs) {
       const runContext = await client.query("commandQueue:getRunContext", { runId });
       if (runContext?.status === "canceled") {
         runAbort.abort();
+        return;
+      }
+
+      if (runContext?.status === "paused" && childProcess && !processPaused) {
+        childProcess.kill("SIGSTOP");
+        processPaused = true;
+        await client.mutation("commandQueue:appendRunEvent", {
+          runId,
+          kind: "connector",
+          severity: "warning",
+          message: "Dispatcher hat den OpenClaw-Prozess pausiert (SIGSTOP)",
+          currentStep: "Run pausiert",
+        });
+      }
+
+      if (runContext?.status === "running" && childProcess && processPaused) {
+        childProcess.kill("SIGCONT");
+        processPaused = false;
+        await client.mutation("commandQueue:appendRunEvent", {
+          runId,
+          kind: "connector",
+          severity: "info",
+          message: "Dispatcher hat den OpenClaw-Prozess fortgesetzt (SIGCONT)",
+          currentStep: "Run fortgesetzt",
+        });
       }
     } catch {
       // ignore poll errors; next cycle retries
@@ -123,6 +151,9 @@ async function runCommand(client, command, agentName, timeoutMs) {
       scope: command.scope,
       timeoutMs,
       signal: runAbort.signal,
+      onSpawn: (child) => {
+        childProcess = child;
+      },
       onStdout: async (text) => {
         const compact = text.trim();
         if (!compact) return;

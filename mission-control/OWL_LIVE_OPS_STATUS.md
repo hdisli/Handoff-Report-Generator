@@ -105,3 +105,23 @@
 
 ### Nächster Schritt (09:00)
 - Control-Bar um `pause/resume` im Dashboard ergänzen und im Dispatcher den Pause-Pfad aktiv berücksichtigen (Polling + Event-Feedback), damit die MVP-Steuerung vollständig ist.
+
+## 2026-02-08 09:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Dashboard-Control-Bar in `src/app/page.tsx` erweitert:
+  - `Pause`-Button für laufende Runs (`running`)
+  - `Resume`-Button für pausierte Runs (`paused`)
+  - bestehende Controls (`stop/retry/prioritize`) bleiben unverändert verfügbar.
+- Dispatcher `scripts/owl-dispatcher.mjs` um aktiven Pause-/Resume-Pfad ergänzt:
+  - Polling auf `commandQueue:getRunContext` erkennt `paused`/`running`
+  - laufender OpenClaw-Prozess wird mit `SIGSTOP` pausiert und mit `SIGCONT` fortgesetzt
+  - Live-Event-Feedback wird in `agentRunEvents` geschrieben (`Run pausiert` / `Run fortgesetzt`).
+- README/Changelog aktualisiert, damit der neue Steuerpfad dokumentiert ist.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt.
+- Ergebnis: **grün** (Typecheck/Lint ohne neue Fehler).
+
+### Nächster Schritt (10:00)
+- E2E-Nachweis für vollständige MVP-Definition-of-Done dokumentieren: ein echter Run inkl. Pause/Resume/Stop/Retry als reproduzierbarer Testablauf mit klaren Schritten für Hasan (inkl. PR-Referenz).

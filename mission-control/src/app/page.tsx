@@ -342,7 +342,7 @@ export default function Home() {
     setCommandPriority("high");
   }
 
-  async function onRunControl(cmd: CommandQueueItem, action: "stop" | "retry" | "prioritize") {
+  async function onRunControl(cmd: CommandQueueItem, action: "pause" | "resume" | "stop" | "retry" | "prioritize") {
     if (!canEdit || !cmd.runId) return;
     await controlRun({
       runId: cmd.runId,
@@ -430,15 +430,39 @@ export default function Home() {
                   {cmd.runId && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {cmd.status === "running" && (
+                        <>
+                          <button
+                            className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRunControl(cmd, "pause");
+                            }}
+                            disabled={!canEdit}
+                          >
+                            Pause
+                          </button>
+                          <button
+                            className="rounded border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRunControl(cmd, "stop");
+                            }}
+                            disabled={!canEdit}
+                          >
+                            Stop
+                          </button>
+                        </>
+                      )}
+                      {cmd.status === "paused" && (
                         <button
-                          className="rounded border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-700"
+                          className="rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs text-emerald-800"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onRunControl(cmd, "stop");
+                            onRunControl(cmd, "resume");
                           }}
                           disabled={!canEdit}
                         >
-                          Stop
+                          Resume
                         </button>
                       )}
                       {(cmd.status === "failed" || cmd.status === "canceled" || cmd.status === "done") && (

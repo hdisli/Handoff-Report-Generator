@@ -233,3 +233,27 @@
 
 ### Nächster Schritt (15:00)
 - GitHub-Auth herstellen, Branch pushen, PR-Link erzeugen, danach bei bestätigter MVP-Fertigstellung den Sprint-Cron `6ae8f4f2-164b-4b68-ae67-3bec243dcbb2` deaktivieren.
+
+## 2026-02-08 15:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Neuer PR-Blocker-Checker `scripts/owl-pr-readiness.mjs` implementiert:
+  - prüft Branch/Remote, Working-Tree-Status, Upstream-Sync und `gh auth status`,
+  - liefert klare Next-Commands für `push` + `gh pr create`,
+  - optional JSON-Ausgabe via `--json` (für Skript-/CI-Weiterverarbeitung),
+  - optional harter Exit bei Blockern via `--strict`.
+- NPM-Command ergänzt: `npm run owl:pr:ready`.
+- Doku aktualisiert:
+  - `README.md` (Workflow-Kommando ergänzt)
+  - `CHANGELOG.md`.
+
+### Kurztest
+- `npm run owl:pr:ready` ausgeführt: zeigt reproduzierbar die aktuellen Blocker (`gh` nicht eingeloggt, uncommitted changes) inkl. konkreter Next-Commands.
+- `npm run check` ausgeführt (**grün**, nur bekannte Warnungen in `convex/_generated/*`).
+
+### Blocker
+- PR-Link weiterhin blockiert durch fehlende GitHub-Authentifizierung auf diesem Host (`gh auth login` oder `GH_TOKEN`).
+- Cron-Deaktivierung erfolgt sofort nach erfolgreicher PR-Erstellung + finaler MVP-Fertigmeldung.
+
+### Nächster Schritt (16:00)
+- Nach bereitgestellter GitHub-Auth: Branch pushen, PR erstellen, Link in Abschlussmeldung setzen und anschließend den Sprint-Cron `6ae8f4f2-164b-4b68-ae67-3bec243dcbb2` deaktivieren/entfernen.

@@ -17,7 +17,8 @@
     "handoff:write": "node scripts/handoff-report.mjs --out HANDOFF_REPORT.md",
     "owl:dispatcher": "node scripts/owl-dispatcher.mjs",
     "owl:e2e:smoke": "node scripts/owl-e2e-smoke.mjs",
-    "owl:mvp:verify": "node scripts/owl-mvp-verify.mjs"
+    "owl:mvp:verify": "node scripts/owl-mvp-verify.mjs",
+    "owl:pr:ready": "node scripts/owl-pr-readiness.mjs"
   },
   "dependencies": {
     "convex": "^1.31.7",

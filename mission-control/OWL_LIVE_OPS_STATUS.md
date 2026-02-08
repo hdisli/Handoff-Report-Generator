@@ -1,5 +1,26 @@
 # Owl Live Ops Cockpit – Sprint-Status
 
+## 2026-02-09 00:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Owl-Body-Status in `src/app/page.tsx` um einen **sichtbaren Dispatcher-Warnbanner** erweitert:
+  - zeigt klare Warnung bei fehlendem Heartbeat,
+  - zeigt Offline-Warnung mit Sekundenalter bei `isOnline=false`,
+  - zeigt Stale-Warnung bei verzögertem Heartbeat (`ageMs > 10s`).
+- Ziel: Bridge-Störungen (Queue wird nicht mehr konsumiert) sind jetzt im Cockpit sofort als Warnzustand erkennbar und nicht nur im Detailtext versteckt.
+- Doku synchronisiert:
+  - `README.md` um den Warnbanner-Hinweis ergänzt,
+  - `CHANGELOG.md` aktualisiert.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt: **grün**.
+
+### Blocker
+- PR-Link weiterhin blockiert, da GitHub-Auth auf diesem Host fehlt (`gh auth status` nicht eingeloggt).
+
+### Nächster Schritt (01:00)
+- Falls GitHub-Auth verfügbar wird: Branch pushen, PR erstellen und Link liefern; danach bei bestätigter MVP-Fertigstellung den Sprint-Cron `6ae8f4f2-164b-4b68-ae67-3bec243dcbb2` deaktivieren/entfernen.
+
 ## 2026-02-08 23:00 (Europe/Berlin)
 
 ### Geliefert (testbarer Fortschritt)

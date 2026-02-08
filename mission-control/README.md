@@ -74,6 +74,7 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
   - `OWL_HYBRID_AGENT_ID`
 - Dispatcher/Smoke-Test laden `.env.local` jetzt automatisch (Fallback `CONVEX_URL`), deshalb funktioniert `npm run dev:ops` ohne extra ENV-Exports.
 - Dispatcher schreibt Heartbeats nach Convex; das Dashboard zeigt daraus online/offline + Zustand des Connectors, damit Bridge-Ausfälle sofort sichtbar sind.
+- Zusätzlich zeigt das Owl-Body-Panel jetzt eine sichtbare Warnung bei fehlendem/offline/stark verzögertem Heartbeat (stale), damit Ops-Probleme nicht im normalen Status-Text untergehen.
 - Für Governance/Beobachtung kann der Dispatcher read-only laufen (`--readOnly` oder `OWL_READ_ONLY_MODE=true`): Queue wird dann nicht konsumiert, Health bleibt aber live sichtbar.
 - Dispatcher extrahiert jetzt bevorzugt externe Ergebnis-Links (insb. GitHub-PR/Issue-URLs) direkt aus Agent-Output und speichert sie als `resultLink` statt nur Session-Deep-Link.
 - `owl:e2e:smoke` validiert jetzt zusätzlich die Pflicht-Eventkette (`dispatch -> connector -> stdout/stderr -> done`) für Erstlauf + Retry und dokumentiert sie im Report.

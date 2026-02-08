@@ -228,6 +228,16 @@ export default function Home() {
   const rawDispatcherStatus = useQuery(api.commandQueue.dispatcherStatus, { staleAfterMs: 20000 });
   const dispatcherStatus = useMemo(() => (rawDispatcherStatus ?? []) as DispatcherStatus[], [rawDispatcherStatus]);
   const primaryDispatcher = dispatcherStatus[0] ?? null;
+  const dispatcherWarning = useMemo(() => {
+    if (!primaryDispatcher) return "Dispatcher-Heartbeat fehlt – starte `npm run dev:ops` oder `npm run owl:dispatcher`.";
+    if (!primaryDispatcher.isOnline) {
+      return `Dispatcher offline seit ${Math.round(primaryDispatcher.ageMs / 1000)}s – Runs werden aktuell nicht gestartet.`;
+    }
+    if (primaryDispatcher.ageMs > 10000) {
+      return `Dispatcher-Heartbeat verzögert (${Math.round(primaryDispatcher.ageMs / 1000)}s alt).`;
+    }
+    return null;
+  }, [primaryDispatcher]);
   const effectiveRunId =
     selectedRunId || commandQueue.find((item) => item.runId && (item.status === "running" || item.status === "paused"))?.runId || commandQueue.find((item) => item.runId)?.runId || "";
   const search = (useQuery(api.search.global, { term: queryTerm }) ?? {
@@ -631,6 +641,11 @@ export default function Home() {
                   "Dispatcher-Heartbeat: noch keine Daten"
                 )}
               </div>
+              {dispatcherWarning && (
+                <div className={`mt-2 rounded border px-2 py-1 text-xs ${primaryDispatcher?.isOnline ? "border-amber-200 bg-amber-50 text-amber-800" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
+                  {dispatcherWarning}
+                </div>
+              )}
               <div className="mt-2 grid grid-cols-3 gap-1 text-xs text-zinc-600">
                 <span>Queued: {liveOpsSnapshot?.counts.queued ?? 0}</span>
                 <span>Running: {liveOpsSnapshot?.counts.running ?? 0}</span>

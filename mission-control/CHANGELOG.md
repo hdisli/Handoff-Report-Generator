@@ -32,6 +32,7 @@
 - Dashboard-Live-Timeline zeigt jetzt zusätzlich einen sichtbaren Audit-Trail für Control-Aktionen (`pause/resume/stop/retry/prioritize`) inkl. Filter auf den aktuell ausgewählten Run.
 - `owl:mvp:verify` liefert bei nicht erreichbarem Convex-Backend nun eine klare, handlungsorientierte Fehlermeldung (inkl. Start-Hinweis) statt unklarem Stacktrace.
 - Dashboard zeigt im Owl-Body zusätzlich den Dispatcher-Health (online/offline, state, letzte Meldung) als Live-Indikator für die echte Queue->Run-Bridge.
+- Owl-Body ergänzt um sichtbaren Warnbanner bei fehlendem/offline/stale Dispatcher-Heartbeat, damit Bridge-Ausfälle sofort auffallen.
 - Live-Timeline kann jetzt auch als globaler Stream laufen (ohne ausgewählten Run) inkl. Scope-/Severity-Filter und Scope-Badge pro Event.
 - `owl:e2e:smoke` validiert jetzt die Pflicht-Eventkette (`dispatch -> connector -> stdout/stderr -> done`) für beide Läufe statt nur Endstatus.
 - Dispatcher setzt `resultLink` jetzt bevorzugt auf externen Nachweis-Link aus dem Agent-Output (z. B. GitHub-PR) und fällt erst dann auf Session-Link zurück.

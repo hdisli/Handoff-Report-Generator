@@ -17,6 +17,15 @@ Syntax:
 ### RUN_VIDEO
 `RUN_VIDEO | input=<task_id|liste> | variants=<A/B/C> | styles=<clean,fast>`
 
+### GEN_VIDEO_CHAIN
+`GEN_VIDEO_CHAIN | thema=<...> | target_seconds=<60|90|120|180> | segment_seconds=<8|10|12> | engine=<veo-browser>`
+
+### STITCH_CHAIN
+`STITCH_CHAIN | input=<assets/chain/segments> | output=<outputs/chain_longform.mp4>`
+
+### QA_CHAIN
+`QA_CHAIN | input=<outputs/chain_longform.mp4> | strict=<true|false>`
+
 ### QA_ONLY
 `QA_ONLY | input=<task_id|asset_ids> | strict=<true|false>`
 

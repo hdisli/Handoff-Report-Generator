@@ -49,6 +49,8 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
 - `npm run dev:web` startet nur das Frontend.
 - `npm run dev:backend` startet nur Convex.
 - `npm run check` führt Lint + Typecheck als Schnellprüfung vor Commits aus.
+- `npm run handoff` erzeugt einen kompakten Handoff-Report (Diff, Review-Fokus, TODOs) im Terminal.
+- `npm run handoff:write` schreibt denselben Report nach `HANDOFF_REPORT.md` (praktisch für PR-Beschreibungen).
 
 ## Hinweise
 

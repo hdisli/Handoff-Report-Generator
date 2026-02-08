@@ -11,7 +11,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check": "npm run lint && npm run typecheck"
+    "check": "npm run lint && npm run typecheck",
+    "handoff": "node scripts/handoff-report.mjs",
+    "handoff:write": "node scripts/handoff-report.mjs --out HANDOFF_REPORT.md"
   },
   "dependencies": {
     "convex": "^1.31.7",

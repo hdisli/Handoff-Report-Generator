@@ -21,6 +21,7 @@
 - Neues Dispatcher-Heartbeat-Modell (`dispatcherHeartbeats`) inkl. Convex-Endpunkten `dispatcherHeartbeat` und `dispatcherStatus` für Online/Offline-Health des echten Connectors.
 - `owl:e2e:smoke` schreibt jetzt einen Markdown-Report (`outputs/owl-e2e-latest.md`) mit Event-Trace für Erstlauf + Retry.
 - Dispatcher-Selftest (`--selftest`) für die interne Link-Erkennung ergänzt, inkl. Priorisierung von GitHub-PR/Issue-URLs.
+- Neuer Dispatcher-Read-only-Modus (`--readOnly` / `OWL_READ_ONLY_MODE=true`) für sichere Beobachtung ohne Queue-Konsum.
 
 ### Updated
 - README um die neue Handoff-/Smoke-Check-Nutzung ergänzt.

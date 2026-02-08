@@ -1,5 +1,26 @@
 # Owl Live Ops Cockpit – Sprint-Status
 
+## 2026-02-08 23:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Governance-Lücke aus der Spezifikation („read-only mode für Beobachtung ohne Ausführung") direkt in der Bridge geschlossen:
+  - `scripts/owl-dispatcher.mjs` unterstützt jetzt `--readOnly` sowie Env-Flag `OWL_READ_ONLY_MODE=true`.
+  - In Read-only wird **kein** `takeNextQueued` ausgeführt (Queue bleibt unangetastet), der Dispatcher sendet aber weiterhin Live-Heartbeats für Health/Status.
+  - `--help` dokumentiert die neue Option für operativen Einsatz.
+- Doku synchronisiert:
+  - `README.md` um Read-only-Startkommando + Governance-Hinweis ergänzt.
+  - `CHANGELOG.md` aktualisiert.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt: **grün**.
+- `npm run owl:dispatcher -- --help` ausgeführt: neue Option `--readOnly` sichtbar.
+
+### Blocker
+- PR-Link weiterhin blockiert, da GitHub-Auth auf diesem Host fehlt (`gh auth status` nicht eingeloggt).
+
+### Nächster Schritt (00:00)
+- Nach verfügbarer GitHub-Auth: Branch pushen, PR erstellen, Link posten und bei bestätigtem MVP-Abschluss den Sprint-Cron `6ae8f4f2-164b-4b68-ae67-3bec243dcbb2` deaktivieren/entfernen.
+
 ## 2026-02-08 22:00 (Europe/Berlin)
 
 ### Geliefert (testbarer Fortschritt)

@@ -27,6 +27,12 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function parseBoolean(value) {
+  if (value === undefined || value === null) return false;
+  const normalized = String(value).trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
+
 function loadDotEnvLocal() {
   const envPath = path.resolve(process.cwd(), ".env.local");
   if (!fs.existsSync(envPath)) return;
@@ -310,7 +316,7 @@ async function runCommand(client, command, agentName, timeoutMs, preferredScope)
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.has("--help")) {
-    console.log(`Owl Live Ops Dispatcher\n\nOptionen:\n  --intervalMs <n>   Polling-Intervall (Default: 4000)\n  --agent <name>     Agent-Label (Default: owl-dispatcher)\n  --scope <all|main|subagent|hybrid>  Scope-Filter (Default: all)\n  --timeoutMs <n>    Timeout pro OpenClaw-Run (Default: 600000)\n  --once             Genau einen Poll-Lauf ausführen\n  --selftest         Interne Parser-Checks ausführen und beenden\n`);
+    console.log(`Owl Live Ops Dispatcher\n\nOptionen:\n  --intervalMs <n>   Polling-Intervall (Default: 4000)\n  --agent <name>     Agent-Label (Default: owl-dispatcher)\n  --scope <all|main|subagent|hybrid>  Scope-Filter (Default: all)\n  --timeoutMs <n>    Timeout pro OpenClaw-Run (Default: 600000)\n  --readOnly         Queue nur beobachten (keine Runs starten)\n  --once             Genau einen Poll-Lauf ausführen\n  --selftest         Interne Parser-Checks ausführen und beenden\n`);
     return;
   }
 
@@ -330,6 +336,7 @@ async function main() {
   const timeoutMs = Number(args.get("--timeoutMs") ?? 600000);
   const agentName = args.get("--agent") ?? "owl-dispatcher";
   const preferredScope = args.get("--scope") ?? "all";
+  const readOnly = args.has("--readOnly") || parseBoolean(process.env.OWL_READ_ONLY_MODE);
   const once = args.has("--once");
 
   const client = new ConvexHttpClient(convexUrl);
@@ -338,10 +345,20 @@ async function main() {
     dispatcher: agentName,
     state: "polling",
     scope: preferredScope,
-    message: "Dispatcher gestartet",
+    message: readOnly ? "Dispatcher gestartet (read-only)" : "Dispatcher gestartet",
   });
 
   const cycle = async () => {
+    if (readOnly) {
+      await sendHeartbeat(client, {
+        dispatcher: agentName,
+        state: "idle",
+        scope: preferredScope,
+        message: "Read-only aktiv: Queue wird nur beobachtet",
+      });
+      return false;
+    }
+
     const next = await client.mutation("commandQueue:takeNextQueued", {
       dispatcher: agentName,
       assignedAgent: agentName,
@@ -395,7 +412,9 @@ async function main() {
     return;
   }
 
-  console.log(`[dispatcher] gestartet (${agentName}), Polling alle ${intervalMs}ms`);
+  console.log(
+    `[dispatcher] gestartet (${agentName}), Polling alle ${intervalMs}ms${readOnly ? " [read-only]" : ""}`,
+  );
   while (true) {
     try {
       await cycle();

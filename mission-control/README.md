@@ -51,7 +51,7 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
 - `npm run dev:backend` startet nur Convex.
 - `npm run check` führt Lint + Typecheck als Schnellprüfung vor Commits aus.
 - `npm run owl:dispatcher -- --once` triggert genau einen Poll-Zyklus (ideal für E2E-Smoketest der Bridge).
-- `npm run owl:e2e:smoke` führt den reproduzierbaren Smoke-Test `enqueue -> done -> retry -> done` gegen Convex + echten Dispatcher aus.
+- `npm run owl:e2e:smoke` führt den reproduzierbaren Smoke-Test `enqueue -> done -> retry -> done` gegen Convex + echten Dispatcher aus und schreibt einen Markdown-Report (`outputs/owl-e2e-latest.md`).
 - `npm run owl:mvp:verify` prüft die MVP-DoD-Checks direkt gegen den aktuellen Convex-Run-Verlauf (inkl. stop/retry, pause/resume, Ergebnis-Link).
   - Optional: `--waitForBackendMs <ms>` wartet auf ein startendes Convex-Backend (hilfreich direkt nach `dev:ops`-Start).
 - `npm run owl:pr:ready` prüft PR-Bereitschaft (Git-Status, Upstream, `gh`-Auth) und gibt die nächsten Push/PR-Kommandos aus.
@@ -72,6 +72,7 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
   - `OWL_HYBRID_AGENT_ID`
 - Dispatcher/Smoke-Test laden `.env.local` jetzt automatisch (Fallback `CONVEX_URL`), deshalb funktioniert `npm run dev:ops` ohne extra ENV-Exports.
 - Dispatcher schreibt Heartbeats nach Convex; das Dashboard zeigt daraus online/offline + Zustand des Connectors, damit Bridge-Ausfälle sofort sichtbar sind.
+- `owl:e2e:smoke` validiert jetzt zusätzlich die Pflicht-Eventkette (`dispatch -> connector -> stdout/stderr -> done`) für Erstlauf + Retry und dokumentiert sie im Report.
 - `owl:mvp:verify` gibt bei fehlendem Backend jetzt eine klare Diagnose mit Startbefehl statt nur einem rohen Fetch-Stacktrace.
 - Für Standalone-Dispatcher-Starts kann die URL weiterhin explizit gesetzt werden, z. B.:
   - `NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210 npm run owl:dispatcher -- --once`

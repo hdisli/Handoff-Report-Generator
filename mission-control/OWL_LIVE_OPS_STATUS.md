@@ -1,5 +1,24 @@
 # Owl Live Ops Cockpit – Sprint-Status
 
+## 2026-02-08 21:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Smoke-E2E-Bridge (`scripts/owl-e2e-smoke.mjs`) funktional verschärft:
+  - validiert jetzt pro Lauf die Pflicht-Eventkette `dispatch -> connector -> stdout/stderr -> done` statt nur den Endstatus,
+  - schreibt einen reproduzierbaren Markdown-Report nach `outputs/owl-e2e-latest.md` (inkl. Zeitstempel + Event-Trace für Erstlauf und Retry),
+  - neue CLI-Option `--reportPath` für flexible Ablage im CI/Review.
+- Doku synchronisiert:
+  - `README.md` um Eventketten-Validierung + Report-Datei ergänzt,
+  - `OWL_LIVE_OPS_E2E.md` auf aktuellen Stand gebracht (automatischer Report als Abnahme-Artefakt),
+  - `CHANGELOG.md` ergänzt.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt: **grün**.
+- `npm run owl:e2e:smoke -- --help` ausgeführt: neue Optionen/Verhalten (`--reportPath`, Eventketten-Validierung) sichtbar.
+
+### Nächster Schritt (22:00)
+- Mit laufendem `npm run dev:ops` einmal `npm run owl:e2e:smoke` komplett ausführen, erzeugten Report (`outputs/owl-e2e-latest.md`) als Nachweis anhängen und danach PR-Link erzeugen (sofern GitHub-Auth freigegeben).
+
 ## 2026-02-08 20:00 (Europe/Berlin)
 
 ### Geliefert (testbarer Fortschritt)

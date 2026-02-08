@@ -86,10 +86,57 @@ async function waitForTerminalState(client, commandId, timeoutMs) {
   throw new Error(`Timeout: Command ${commandId} hat keinen Terminal-Status erreicht`);
 }
 
+function assertRunEvents(runId, events) {
+  if (!events.length) {
+    throw new Error(`Keine Events für Run ${runId} gefunden`);
+  }
+
+  const hasDispatch = events.some((event) => event.kind === "dispatch");
+  const hasConnector = events.some((event) => event.kind === "connector");
+  const hasProgress = events.some((event) => event.kind === "stdout" || event.kind === "stderr");
+  const hasDone = events.some((event) => event.kind === "status" && /done/i.test(event.message));
+
+  if (!hasDispatch) throw new Error(`Run ${runId}: dispatch-Event fehlt`);
+  if (!hasConnector) throw new Error(`Run ${runId}: connector-Event fehlt`);
+  if (!hasProgress) throw new Error(`Run ${runId}: stdout/stderr Fortschritt fehlt`);
+  if (!hasDone) throw new Error(`Run ${runId}: done-Status-Event fehlt`);
+}
+
+function formatTs(ts) {
+  return new Date(ts).toLocaleString("de-DE", { timeZone: "Europe/Berlin" });
+}
+
+function buildReport({ commandId, firstRun, retryRun, generatedAt }) {
+  const lines = [];
+  lines.push("# Owl Live Ops Smoke-E2E Report");
+  lines.push("");
+  lines.push(`- Generiert: ${generatedAt}`);
+  lines.push(`- Command: ${commandId}`);
+  lines.push(`- Erstlauf: ${firstRun.runId}`);
+  lines.push(`- Retry-Lauf: ${retryRun.runId}`);
+  lines.push("");
+
+  const sections = [
+    { title: "Erstlauf", run: firstRun },
+    { title: "Retry", run: retryRun },
+  ];
+
+  for (const section of sections) {
+    lines.push(`## ${section.title} (${section.run.runId})`);
+    lines.push("");
+    for (const event of section.run.events.slice().reverse()) {
+      lines.push(`- [${formatTs(event.ts)}] (${event.severity}) ${event.kind}: ${event.message}`);
+    }
+    lines.push("");
+  }
+
+  return `${lines.join("\n")}\n`;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.has("--help")) {
-    console.log("Owl Live Ops Smoke-E2E\n\nErfordert laufendes Convex-Backend (NEXT_PUBLIC_CONVEX_URL).\nDer Test prüft: enqueue -> dispatcher run -> done -> retry -> done.\n\nOptionen:\n  --dispatcherTimeoutMs <n>  Timeout für einen Dispatcher-Lauf (Default: 180000)\n  --waitTimeoutMs <n>        Timeout fürs Warten auf Terminal-Status (Default: 240000)\n");
+    console.log("Owl Live Ops Smoke-E2E\n\nErfordert laufendes Convex-Backend (NEXT_PUBLIC_CONVEX_URL).\nDer Test prüft: enqueue -> dispatcher run -> done -> retry -> done.\nZusätzlich werden Pflicht-Events validiert (dispatch -> connector -> progress -> done)\nund ein Markdown-Report geschrieben.\n\nOptionen:\n  --dispatcherTimeoutMs <n>  Timeout für einen Dispatcher-Lauf (Default: 180000)\n  --waitTimeoutMs <n>        Timeout fürs Warten auf Terminal-Status (Default: 240000)\n  --reportPath <path>        Zielpfad für Markdown-Report (Default: outputs/owl-e2e-latest.md)\n");
     return;
   }
 
@@ -102,6 +149,7 @@ async function main() {
 
   const dispatcherTimeoutMs = Number(args.get("--dispatcherTimeoutMs") ?? 180000);
   const waitTimeoutMs = Number(args.get("--waitTimeoutMs") ?? 240000);
+  const reportPath = path.resolve(process.cwd(), args.get("--reportPath") ?? "outputs/owl-e2e-latest.md");
   const client = new ConvexHttpClient(convexUrl);
 
   const title = `Smoke E2E ${new Date().toISOString()}`;
@@ -125,6 +173,10 @@ async function main() {
     throw new Error("Erster Lauf hat keine runId.");
   }
 
+  const firstRunId = row.runId;
+  const firstRunEvents = await client.query("commandQueue:listRunEvents", { runId: firstRunId, limit: 150 });
+  assertRunEvents(firstRunId, firstRunEvents);
+
   console.log(`[e2e] Erster Lauf done (${row.runId}), starte Retry...`);
   await client.mutation("commandQueue:controlRun", {
     runId: row.runId,
@@ -144,7 +196,26 @@ async function main() {
     throw new Error(`Retry-Zähler unerwartet: ${row.retryCount}`);
   }
 
+  if (!row.runId) {
+    throw new Error("Retry-Lauf hat keine runId.");
+  }
+
+  const retryRunId = row.runId;
+  const retryRunEvents = await client.query("commandQueue:listRunEvents", { runId: retryRunId, limit: 150 });
+  assertRunEvents(retryRunId, retryRunEvents);
+
+  const report = buildReport({
+    commandId,
+    firstRun: { runId: firstRunId, events: firstRunEvents },
+    retryRun: { runId: retryRunId, events: retryRunEvents },
+    generatedAt: new Date().toLocaleString("de-DE", { timeZone: "Europe/Berlin" }),
+  });
+
+  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+  fs.writeFileSync(reportPath, report, "utf8");
+
   console.log(`[e2e] OK: ${commandId} -> done (retryCount=${row.retryCount})`);
+  console.log(`[e2e] Report geschrieben: ${reportPath}`);
 }
 
 main().catch((error) => {

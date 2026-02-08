@@ -19,6 +19,7 @@
 - `owl:mvp:verify` unterstützt jetzt `--waitForBackendMs`, damit Verifikation auch direkt beim Hochfahren von Convex robust automatisiert werden kann.
 - Neues Script `scripts/owl-pr-readiness.mjs` + npm-Command `owl:pr:ready` als PR-Blocker-Check (Working Tree, Upstream, GitHub-Auth) mit klaren Next-Commands.
 - Neues Dispatcher-Heartbeat-Modell (`dispatcherHeartbeats`) inkl. Convex-Endpunkten `dispatcherHeartbeat` und `dispatcherStatus` für Online/Offline-Health des echten Connectors.
+- `owl:e2e:smoke` schreibt jetzt einen Markdown-Report (`outputs/owl-e2e-latest.md`) mit Event-Trace für Erstlauf + Retry.
 
 ### Updated
 - README um die neue Handoff-/Smoke-Check-Nutzung ergänzt.
@@ -30,6 +31,7 @@
 - `owl:mvp:verify` liefert bei nicht erreichbarem Convex-Backend nun eine klare, handlungsorientierte Fehlermeldung (inkl. Start-Hinweis) statt unklarem Stacktrace.
 - Dashboard zeigt im Owl-Body zusätzlich den Dispatcher-Health (online/offline, state, letzte Meldung) als Live-Indikator für die echte Queue->Run-Bridge.
 - Live-Timeline kann jetzt auch als globaler Stream laufen (ohne ausgewählten Run) inkl. Scope-/Severity-Filter und Scope-Badge pro Event.
+- `owl:e2e:smoke` validiert jetzt die Pflicht-Eventkette (`dispatch -> connector -> stdout/stderr -> done`) für beide Läufe statt nur Endstatus.
 
 ## 2026-02-07
 

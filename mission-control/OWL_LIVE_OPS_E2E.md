@@ -1,6 +1,6 @@
 # Owl Live Ops Cockpit – E2E-Nachweis (MVP)
 
-Stand: 2026-02-08 10:00 (Europe/Berlin)
+Stand: 2026-02-08 21:00 (Europe/Berlin)
 
 Dieses Dokument liefert einen reproduzierbaren Testablauf für die Definition of Done:
 - Dashboard-Eintrag startet echten Agent-Run
@@ -27,7 +27,9 @@ Erwartung:
 - Script legt Command in Queue,
 - Dispatcher verarbeitet ihn (`done`),
 - Script triggert `retry`,
-- Dispatcher verarbeitet erneut (`done`, `retryCount >= 1`).
+- Dispatcher verarbeitet erneut (`done`, `retryCount >= 1`),
+- Eventkette wird für beide Läufe geprüft (`dispatch -> connector -> stdout/stderr -> done`),
+- Markdown-Report landet unter `outputs/owl-e2e-latest.md` (mit Zeitstempeln und Event-Trace).
 
 ## B) Manueller Volltest im Dashboard (inkl. Controls)
 

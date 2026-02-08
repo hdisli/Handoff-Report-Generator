@@ -27,6 +27,33 @@ type QueueItem = {
   errorMessage?: string;
 };
 
+type CommandScope = "main" | "subagent" | "hybrid";
+type CommandPriority = "low" | "normal" | "high" | "urgent";
+type CommandStatus = "queued" | "running" | "paused" | "done" | "failed" | "canceled";
+
+type CommandQueueItem = {
+  _id: string;
+  title: string;
+  prompt: string;
+  scope: CommandScope;
+  priority: CommandPriority;
+  status: CommandStatus;
+  runId?: string;
+  resultSummary?: string;
+  resultLink?: string;
+  error?: string;
+  createdAt: number;
+};
+
+type AgentRunEvent = {
+  _id: string;
+  runId: string;
+  ts: number;
+  kind: string;
+  severity: "info" | "warning" | "error";
+  message: string;
+};
+
 type SearchResult = {
   activities: Activity[];
   tasks: Task[];
@@ -68,6 +95,22 @@ const queueStatusLabel: Record<QueueItem["status"], string> = {
   publishing: "Wird veröffentlicht",
   published: "Veröffentlicht",
   failed: "Fehlgeschlagen",
+};
+
+const commandStatusLabel: Record<CommandStatus, string> = {
+  queued: "Queued",
+  running: "Running",
+  paused: "Pausiert",
+  done: "Done",
+  failed: "Fehlgeschlagen",
+  canceled: "Abgebrochen",
+};
+
+const priorityLabel: Record<CommandPriority, string> = {
+  low: "Low",
+  normal: "Normal",
+  high: "High",
+  urgent: "Urgent",
 };
 
 function getWeekWindow(offsetWeeks: number) {
@@ -119,6 +162,12 @@ export default function Home() {
   const [approvalPlatform, setApprovalPlatform] = useState<"instagram" | "tiktok" | "x">("instagram");
   const [approvalPayload, setApprovalPayload] = useState("");
 
+  const [commandTitle, setCommandTitle] = useState("");
+  const [commandPrompt, setCommandPrompt] = useState("");
+  const [commandScope, setCommandScope] = useState<CommandScope>("hybrid");
+  const [commandPriority, setCommandPriority] = useState<CommandPriority>("high");
+  const [selectedRunId, setSelectedRunId] = useState("");
+
   const canEdit = role === "owner" || role === "editor";
   const week = useMemo(() => getWeekWindow(weekOffset), [weekOffset]);
 
@@ -132,11 +181,18 @@ export default function Home() {
   const tasks = useMemo(() => (rawTasks ?? []) as Task[], [rawTasks]);
   const approvals = (useQuery(api.approvals.list, { status: "all", limit: 30 }) ?? []) as Approval[];
   const queue = (useQuery(api.postQueue.list, { status: "all", limit: 30 }) ?? []) as QueueItem[];
+  const commandQueue = (useQuery(api.commandQueue.list, { status: "all", limit: 40 }) ?? []) as CommandQueueItem[];
+  const effectiveRunId =
+    selectedRunId || commandQueue.find((item) => item.runId && (item.status === "running" || item.status === "paused"))?.runId || commandQueue.find((item) => item.runId)?.runId || "";
   const search = (useQuery(api.search.global, { term: queryTerm }) ?? {
     activities: [],
     tasks: [],
     documents: [],
   }) as SearchResult;
+  const runEvents = (useQuery(
+    api.commandQueue.listRunEvents,
+    effectiveRunId ? { runId: effectiveRunId, limit: 60 } : "skip",
+  ) ?? []) as AgentRunEvent[];
 
   const logActivity = useMutation(api.activities.log);
   const removeActivity = useMutation(api.activities.remove);
@@ -148,6 +204,7 @@ export default function Home() {
   const setQueueStatus = useMutation(api.postQueue.setStatus);
   const moveBackToApproval = useMutation(api.postQueue.moveBackToApproval);
   const ingestAgentEvent = useMutation(api.events.ingestAgentEvent);
+  const enqueueCommand = useMutation(api.commandQueue.enqueue);
 
   const tasksByDay = useMemo(() => {
     const map = new Map<string, DayBucket>();
@@ -266,6 +323,23 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [highlightApprovalId]);
 
+  async function onCommandSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!canEdit || !commandTitle.trim() || !commandPrompt.trim()) return;
+    await enqueueCommand({
+      createdBy: "Hasan",
+      source: "owl-dashboard",
+      title: commandTitle,
+      prompt: commandPrompt,
+      scope: commandScope,
+      priority: commandPriority,
+    });
+    setCommandTitle("");
+    setCommandPrompt("");
+    setCommandScope("hybrid");
+    setCommandPriority("high");
+  }
+
   return (
     <div className="min-h-screen bg-zinc-100 p-6 text-zinc-900">
       <main className="mx-auto max-w-7xl space-y-6">
@@ -283,6 +357,77 @@ export default function Home() {
             </select>
           </div>
         </header>
+
+        <section className="grid gap-6 xl:grid-cols-3">
+          <article className="rounded-2xl bg-white p-5 shadow-sm xl:col-span-2">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Owl Live Ops · Command Queue</h2>
+              <p className="text-xs text-zinc-500">Bridge-Eingang für echte Agent-Ausführung</p>
+            </div>
+
+            <form onSubmit={onCommandSubmit} className="mb-4 grid gap-2 md:grid-cols-6">
+              <input className="rounded border px-3 py-2 text-sm md:col-span-2" placeholder="Command-Titel" value={commandTitle} onChange={(e) => setCommandTitle(e.target.value)} disabled={!canEdit} />
+              <input className="rounded border px-3 py-2 text-sm md:col-span-3" placeholder="Prompt für Agent-Ausführung" value={commandPrompt} onChange={(e) => setCommandPrompt(e.target.value)} disabled={!canEdit} />
+              <select className="rounded border px-2 py-2 text-sm" value={commandScope} onChange={(e) => setCommandScope(e.target.value as CommandScope)}>
+                <option value="main">main</option>
+                <option value="subagent">subagent</option>
+                <option value="hybrid">hybrid</option>
+              </select>
+              <select className="rounded border px-2 py-2 text-sm" value={commandPriority} onChange={(e) => setCommandPriority(e.target.value as CommandPriority)}>
+                <option value="low">Low</option>
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+              <button className="rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-40 md:col-span-6" disabled={!canEdit}>In Queue legen</button>
+            </form>
+
+            <div className="max-h-[360px] space-y-2 overflow-auto">
+              {commandQueue.map((cmd) => (
+                <button
+                  key={cmd._id}
+                  className={`w-full rounded border p-3 text-left ${cmd.runId && selectedRunId === cmd.runId ? "border-black bg-zinc-50" : "border-zinc-200 bg-white"}`}
+                  onClick={() => cmd.runId && setSelectedRunId(cmd.runId)}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-medium">{cmd.title}</p>
+                    <div className="flex items-center gap-1">
+                      <span className="rounded border border-zinc-300 px-2 py-0.5 text-xs">{priorityLabel[cmd.priority]}</span>
+                      <span className="rounded border border-zinc-300 px-2 py-0.5 text-xs">{cmd.scope}</span>
+                      <span className={`rounded px-2 py-0.5 text-xs font-semibold ${cmd.status === "done" ? "bg-emerald-100 text-emerald-800" : cmd.status === "failed" ? "bg-rose-100 text-rose-700" : cmd.status === "running" ? "bg-amber-100 text-amber-800" : "bg-zinc-100 text-zinc-700"}`}>{commandStatusLabel[cmd.status]}</span>
+                    </div>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs text-zinc-600">{cmd.prompt}</p>
+                  <p className="mt-1 text-xs text-zinc-500">{new Date(cmd.createdAt).toLocaleString("de-DE")}{cmd.runId ? ` · ${cmd.runId}` : ""}</p>
+                  {cmd.resultSummary && <p className="mt-1 text-xs text-emerald-700">Ergebnis: {cmd.resultSummary}</p>}
+                  {cmd.error && <p className="mt-1 text-xs text-rose-700">Fehler: {cmd.error}</p>}
+                </button>
+              ))}
+            </div>
+          </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Live-Timeline</h2>
+              <p className="text-xs text-zinc-500">{effectiveRunId || "Kein Run gewählt"}</p>
+            </div>
+            <div className="max-h-[360px] space-y-2 overflow-auto">
+              {runEvents.length === 0 ? (
+                <p className="text-sm text-zinc-500">Noch keine Events.</p>
+              ) : (
+                runEvents.map((event) => (
+                  <div key={event._id} className="rounded border border-zinc-200 bg-zinc-50 p-2 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`rounded px-2 py-0.5 text-xs font-semibold ${event.severity === "error" ? "bg-rose-100 text-rose-700" : event.severity === "warning" ? "bg-amber-100 text-amber-800" : "bg-sky-100 text-sky-700"}`}>{event.kind}</span>
+                      <span className="text-xs text-zinc-500">{new Date(event.ts).toLocaleTimeString("de-DE")}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-700">{event.message}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </article>
+        </section>
 
         <section className="grid gap-6 lg:grid-cols-3">
           <article className="rounded-2xl bg-white p-5 shadow-sm">

@@ -10,6 +10,7 @@
 
 import type * as activities from "../activities.js";
 import type * as approvals from "../approvals.js";
+import type * as commandQueue from "../commandQueue.js";
 import type * as documents from "../documents.js";
 import type * as events from "../events.js";
 import type * as members from "../members.js";
@@ -26,6 +27,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   approvals: typeof approvals;
+  commandQueue: typeof commandQueue;
   documents: typeof documents;
   events: typeof events;
   members: typeof members;

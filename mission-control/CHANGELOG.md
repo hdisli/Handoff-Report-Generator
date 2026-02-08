@@ -15,6 +15,8 @@
 
 ### Updated
 - README um die neue Handoff-/Smoke-Check-Nutzung ergänzt.
+- Owl-Dispatcher auf Convex-HTTP-Funktionspfade (`commandQueue:...`) korrigiert und mit Default-Agent-Mapping (`main` / `swarm-automation`) robuster gemacht.
+- Command-Queue-UI zeigt jetzt `sessionKey` und klickbaren `resultLink` für schnellere Nachverfolgung.
 
 ## 2026-02-07
 

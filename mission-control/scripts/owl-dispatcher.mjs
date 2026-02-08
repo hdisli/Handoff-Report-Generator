@@ -40,12 +40,12 @@ function parseAgentJson(rawText) {
 async function runAgentCommand({ command, scope, timeoutMs, onStdout, onStderr, signal }) {
   const args = ["agent", "--local", "--json", "--message", command.prompt];
   const agentMap = {
-    main: process.env.OWL_MAIN_AGENT_ID,
-    subagent: process.env.OWL_SUBAGENT_AGENT_ID,
-    hybrid: process.env.OWL_HYBRID_AGENT_ID,
+    main: process.env.OWL_MAIN_AGENT_ID || "main",
+    subagent: process.env.OWL_SUBAGENT_AGENT_ID || "swarm-automation",
+    hybrid: process.env.OWL_HYBRID_AGENT_ID || "swarm-automation",
   };
-  const agentId = agentMap[scope];
-  if (agentId) args.push("--agent", agentId);
+  const agentId = agentMap[scope] || "main";
+  args.push("--agent", agentId);
 
   return await new Promise((resolve, reject) => {
     const child = spawn("openclaw", args, {
@@ -98,7 +98,7 @@ async function runCommand(client, command, agentName, timeoutMs) {
   const runId = command.runId;
   const runAbort = new AbortController();
 
-  await client.mutation("commandQueue.appendRunEvent", {
+  await client.mutation("commandQueue:appendRunEvent", {
     runId,
     kind: "connector",
     severity: "info",
@@ -108,7 +108,7 @@ async function runCommand(client, command, agentName, timeoutMs) {
 
   const stopWatcher = setInterval(async () => {
     try {
-      const runContext = await client.query("commandQueue.getRunContext", { runId });
+      const runContext = await client.query("commandQueue:getRunContext", { runId });
       if (runContext?.status === "canceled") {
         runAbort.abort();
       }
@@ -126,7 +126,7 @@ async function runCommand(client, command, agentName, timeoutMs) {
       onStdout: async (text) => {
         const compact = text.trim();
         if (!compact) return;
-        await client.mutation("commandQueue.appendRunEvent", {
+        await client.mutation("commandQueue:appendRunEvent", {
           runId,
           kind: "stdout",
           severity: "info",
@@ -137,7 +137,7 @@ async function runCommand(client, command, agentName, timeoutMs) {
       onStderr: async (text) => {
         const compact = text.trim();
         if (!compact) return;
-        await client.mutation("commandQueue.appendRunEvent", {
+        await client.mutation("commandQueue:appendRunEvent", {
           runId,
           kind: "stderr",
           severity: "warning",
@@ -151,13 +151,13 @@ async function runCommand(client, command, agentName, timeoutMs) {
     const sessionKey = payload?.sessionKey ?? payload?.sessionId;
     const summary = payload?.reply?.slice?.(0, 280) || payload?.text?.slice?.(0, 280) || "OpenClaw-Run erfolgreich abgeschlossen.";
 
-    await client.mutation("commandQueue.attachRunSession", {
+    await client.mutation("commandQueue:attachRunSession", {
       runId,
       sessionKey,
       assignedAgent: payload?.agentId,
     });
 
-    await client.mutation("commandQueue.setRunState", {
+    await client.mutation("commandQueue:setRunState", {
       runId,
       status: "done",
       resultSummary: summary,
@@ -190,7 +190,7 @@ async function main() {
   const client = new ConvexHttpClient(convexUrl);
 
   const cycle = async () => {
-    const next = await client.mutation("commandQueue.takeNextQueued", {
+    const next = await client.mutation("commandQueue:takeNextQueued", {
       dispatcher: agentName,
       assignedAgent: agentName,
       preferredScope,
@@ -207,7 +207,7 @@ async function main() {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const canceled = /gestoppt|stop-control/i.test(message);
-      await client.mutation("commandQueue.setRunState", {
+      await client.mutation("commandQueue:setRunState", {
         runId: next.runId,
         status: canceled ? "canceled" : "failed",
         error: message,

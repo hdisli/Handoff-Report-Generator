@@ -39,6 +39,7 @@ type CommandQueueItem = {
   priority: CommandPriority;
   status: CommandStatus;
   runId?: string;
+  sessionKey?: string;
   resultSummary?: string;
   resultLink?: string;
   error?: string;
@@ -410,6 +411,20 @@ export default function Home() {
                   </div>
                   <p className="mt-1 line-clamp-2 text-xs text-zinc-600">{cmd.prompt}</p>
                   <p className="mt-1 text-xs text-zinc-500">{new Date(cmd.createdAt).toLocaleString("de-DE")}{cmd.runId ? ` · ${cmd.runId}` : ""}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                    {cmd.sessionKey && <span className="rounded border border-zinc-300 px-2 py-0.5 text-zinc-700">session: {cmd.sessionKey}</span>}
+                    {cmd.resultLink && (
+                      <a
+                        className="rounded border border-sky-300 bg-sky-50 px-2 py-0.5 text-sky-700 underline-offset-2 hover:underline"
+                        href={cmd.resultLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Ergebnis-Link öffnen
+                      </a>
+                    )}
+                  </div>
                   {cmd.resultSummary && <p className="mt-1 text-xs text-emerald-700">Ergebnis: {cmd.resultSummary}</p>}
                   {cmd.error && <p className="mt-1 text-xs text-rose-700">Fehler: {cmd.error}</p>}
                   {cmd.runId && (

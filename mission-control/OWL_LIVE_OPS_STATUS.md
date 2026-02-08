@@ -83,3 +83,25 @@
 
 ### Nächster Schritt (08:00)
 - End-to-End-Smoketest mit echtem Queue-Run auf `localhost:3000` (inkl. Nachweis `queued -> running -> done`, anschließend `retry`-Pfad) und ergänzende UI-Anzeige für `sessionKey/resultLink` klickbar machen.
+
+## 2026-02-08 08:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Dispatcher-Bugfix für echte Convex-HTTP-Aufrufe umgesetzt:
+  - Funktionspfade in `scripts/owl-dispatcher.mjs` von Dot-Notation auf Convex-Notation (`commandQueue:...`) korrigiert.
+- Connector robuster gemacht, damit echte Runs ohne zusätzliche Konfiguration starten:
+  - Default-Agent-Mapping ergänzt (`main -> main`, `subagent/hybrid -> swarm-automation`), ENV-Overrides bleiben möglich.
+- Dashboard-UI in `src/app/page.tsx` erweitert:
+  - `sessionKey` (falls vorhanden) sichtbar als Badge,
+  - `resultLink` klickbar direkt in der Command-Queue.
+- README-Hinweise ergänzt (Standalone-Dispatcher mit `NEXT_PUBLIC_CONVEX_URL`, Standard-Agent-Mapping).
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt (**grün**, nur bekannte Warnungen in `convex/_generated/*`).
+- Lokaler E2E-Smoketest (mit laufendem `npx convex dev`) durchgeführt:
+  1. `npx convex run commandQueue:enqueue ...` (Smoke-Command)
+  2. `NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210 npm run owl:dispatcher -- --once --timeoutMs 180000`
+  3. Ergebnis via `npx convex run commandQueue:list '{"status":"all","limit":3}'` geprüft: Status `done`, inkl. Retry-Pfad (`retryCount: 1`) nach initialem erwartbarem Agent-Parameter-Fehler.
+
+### Nächster Schritt (09:00)
+- Control-Bar um `pause/resume` im Dashboard ergänzen und im Dispatcher den Pause-Pfad aktiv berücksichtigen (Polling + Event-Feedback), damit die MVP-Steuerung vollständig ist.

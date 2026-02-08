@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-02-08
+
+### Added
+- `handoff-report` erkennt jetzt automatische Risiko-Signale (z. B. Schema-/Config-/Dependency-Änderungen, große Diffs) für schnellere PR-Reviews.
+- Optionaler Smoke-Check via `--smoke-cmd`, damit Handoffs direkt ein kurzes Test-Ergebnis mitführen.
+
+### Updated
+- README um die neue Handoff-/Smoke-Check-Nutzung ergänzt.
+
 ## 2026-02-07
 
 ### Added

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 
 function run(cmd, fallback = "") {
@@ -8,6 +8,26 @@ function run(cmd, fallback = "") {
   } catch {
     return fallback;
   }
+}
+
+function runSmoke(cmd) {
+  if (!cmd) return null;
+
+  const result = spawnSync(cmd, {
+    shell: true,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  const mergedOutput = [result.stdout, result.stderr].filter(Boolean).join("\n").trim();
+  const outputLines = mergedOutput ? mergedOutput.split("\n") : [];
+
+  return {
+    command: cmd,
+    ok: result.status === 0,
+    exitCode: result.status ?? (result.error ? -1 : 0),
+    outputPreview: outputLines.slice(-12),
+  };
 }
 
 function parseNumstat(output) {
@@ -31,9 +51,15 @@ function section(title, content) {
   return `## ${title}\n${content}`;
 }
 
+function hasChangesIn(changedFiles, predicate) {
+  return changedFiles.some((file) => predicate(file));
+}
+
 const args = process.argv.slice(2);
 const outIndex = args.indexOf("--out");
 const outPath = outIndex >= 0 ? args[outIndex + 1] : "";
+const smokeIndex = args.indexOf("--smoke-cmd");
+const smokeCmd = smokeIndex >= 0 ? args[smokeIndex + 1] : "";
 
 const branch = run("git rev-parse --abbrev-ref HEAD", "unknown");
 const hasOriginMain = run("git show-ref --verify --quiet refs/remotes/origin/main && echo yes || echo no", "no") === "yes";
@@ -54,6 +80,27 @@ const openTodos = run("git grep -nE '\\b(TODO|FIXME)\\b' -- ':!package-lock.json
   .split("\n")
   .filter(Boolean);
 
+const riskSignals = [
+  {
+    label: "Schema/Backend-Änderung erkannt",
+    active: hasChangesIn(changedFiles, (file) => file.startsWith("convex/") || file.includes("schema")),
+  },
+  {
+    label: "Umgebungs-/Config-Datei geändert",
+    active: hasChangesIn(changedFiles, (file) => /(^|\/)\.env|next\.config|tsconfig|eslint\.config/.test(file)),
+  },
+  {
+    label: "Abhängigkeiten verändert (package-lock/package.json)",
+    active: hasChangesIn(changedFiles, (file) => file.endsWith("package.json") || file.endsWith("package-lock.json")),
+  },
+  {
+    label: "Großer Diff (>300 Zeilen gesamt)",
+    active: stat.insertions + stat.deletions > 300,
+  },
+];
+
+const smokeResult = runSmoke(smokeCmd);
+
 const now = new Date();
 const stamp = now.toLocaleString("de-DE", { timeZone: "Europe/Berlin" });
 
@@ -70,6 +117,30 @@ const markdown = [
     changedFiles.length
       ? changedFiles.map((file) => `- ${file}`).join("\n")
       : "- Keine Änderungen gegenüber main.",
+  ),
+  "",
+  section(
+    "Risiko-Signale",
+    riskSignals.some((signal) => signal.active)
+      ? riskSignals
+          .filter((signal) => signal.active)
+          .map((signal) => `- ⚠️ ${signal.label}`)
+          .join("\n")
+      : "- ✅ Keine automatisch erkannten Risiko-Signale.",
+  ),
+  "",
+  section(
+    "Smoke-Check",
+    !smokeResult
+      ? "- Nicht ausgeführt (optional via `--smoke-cmd \"<kommando>\"`)."
+      : [
+          `- Kommando: \`${smokeResult.command}\``,
+          `- Ergebnis: ${smokeResult.ok ? "✅ erfolgreich" : `❌ fehlgeschlagen (Exit ${smokeResult.exitCode})`}`,
+          "- Ausgabe (letzte Zeilen):",
+          ...(smokeResult.outputPreview.length
+            ? smokeResult.outputPreview.map((line) => `  - ${line}`)
+            : ["  - (keine Ausgabe)"]),
+        ].join("\n"),
   ),
   "",
   section(

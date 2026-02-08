@@ -1,5 +1,28 @@
 # Owl Live Ops Cockpit – Sprint-Status
 
+## 2026-02-08 22:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Dispatcher-Rückkanal für Ergebnislinks verbessert (`scripts/owl-dispatcher.mjs`):
+  - neue Link-Erkennung extrahiert URLs direkt aus Agent-Output (`stdout/stderr` + JSON-Reply),
+  - priorisiert automatisch GitHub-PR/Issue-Links als `resultLink`,
+  - fällt nur noch auf `openclaw://session/<sessionKey>` zurück, wenn kein externer Nachweislink vorhanden ist.
+- Interner Schnelltest ergänzt:
+  - neuer Dispatcher-Modus `--selftest` prüft die Link-Erkennung reproduzierbar mit Fixture-Fällen (PR-Link-Priorisierung, URL-Fallback, kein Link).
+- Doku synchronisiert:
+  - `README.md` um `--selftest` und das neue `resultLink`-Verhalten erweitert,
+  - `CHANGELOG.md` ergänzt.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt: **grün** (nur bekannte Warnungen in `convex/_generated/*`).
+- `npm run owl:dispatcher -- --selftest` ausgeführt: **alle Tests OK**.
+
+### Blocker
+- PR-Link weiterhin blockiert, da `gh` auf diesem Host nicht authentifiziert ist (`gh auth status` -> nicht eingeloggt).
+
+### Nächster Schritt (23:00)
+- Sobald GitHub-Auth verfügbar ist: Branch pushen, PR erstellen, Link in Abschlussmeldung aufnehmen; anschließend den Sprint-Cron `6ae8f4f2-164b-4b68-ae67-3bec243dcbb2` deaktivieren/entfernen.
+
 ## 2026-02-08 21:00 (Europe/Berlin)
 
 ### Geliefert (testbarer Fortschritt)

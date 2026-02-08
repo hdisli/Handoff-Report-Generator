@@ -57,6 +57,62 @@ function parseAgentJson(rawText) {
   }
 }
 
+function extractResultLink(...sources) {
+  const merged = sources
+    .filter((value) => typeof value === "string" && value.trim().length > 0)
+    .join("\n");
+  if (!merged) return null;
+
+  const urlRegex = /(https?:\/\/[^\s)\]}>"']+)/gi;
+  const urls = [];
+  let match;
+  while ((match = urlRegex.exec(merged))) {
+    urls.push(match[1]);
+  }
+
+  if (urls.length === 0) return null;
+
+  const prioritized = urls.find((url) => /github\.com\/[^/]+\/[^/]+\/(pull|issues)\/\d+/i.test(url));
+  return prioritized ?? urls[0] ?? null;
+}
+
+function runSelfTest() {
+  const samples = [
+    {
+      name: "priorisiert PR-Link",
+      input: ["Fertig. PR: https://github.com/acme/owl/pull/42\nSession: openclaw://session/abc"],
+      expected: "https://github.com/acme/owl/pull/42",
+    },
+    {
+      name: "fällt auf erste URL zurück",
+      input: ["Siehe Doku https://docs.example.com/run und Logs https://logs.example.com/1"],
+      expected: "https://docs.example.com/run",
+    },
+    {
+      name: "keine URL ergibt null",
+      input: ["Nur Text ohne Link"],
+      expected: null,
+    },
+  ];
+
+  let failed = 0;
+  for (const sample of samples) {
+    const actual = extractResultLink(...sample.input);
+    if (actual !== sample.expected) {
+      failed += 1;
+      console.error(`[selftest] FAIL ${sample.name}: expected=${sample.expected} actual=${actual}`);
+    } else {
+      console.log(`[selftest] OK   ${sample.name}`);
+    }
+  }
+
+  if (failed > 0) {
+    throw new Error(`Dispatcher selftest fehlgeschlagen (${failed})`);
+  }
+
+  console.log("[selftest] Alle Dispatcher-Linktests erfolgreich.");
+}
+
 async function runAgentCommand({ command, scope, timeoutMs, onStdout, onStderr, signal, onSpawn }) {
   const args = ["agent", "--local", "--json", "--message", command.prompt];
   const agentMap = {
@@ -231,6 +287,7 @@ async function runCommand(client, command, agentName, timeoutMs, preferredScope)
     const payload = parseAgentJson(stdout) || parseAgentJson(stderr);
     const sessionKey = payload?.sessionKey ?? payload?.sessionId;
     const summary = payload?.reply?.slice?.(0, 280) || payload?.text?.slice?.(0, 280) || "OpenClaw-Run erfolgreich abgeschlossen.";
+    const externalResultLink = extractResultLink(payload?.reply, payload?.text, stdout, stderr);
 
     await client.mutation("commandQueue:attachRunSession", {
       runId,
@@ -242,7 +299,7 @@ async function runCommand(client, command, agentName, timeoutMs, preferredScope)
       runId,
       status: "done",
       resultSummary: summary,
-      resultLink: sessionKey ? `openclaw://session/${sessionKey}` : "openclaw://agent/local",
+      resultLink: externalResultLink || (sessionKey ? `openclaw://session/${sessionKey}` : "openclaw://agent/local"),
       currentStep: "Erfolgreich abgeschlossen",
     });
   } finally {
@@ -253,7 +310,12 @@ async function runCommand(client, command, agentName, timeoutMs, preferredScope)
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.has("--help")) {
-    console.log(`Owl Live Ops Dispatcher\n\nOptionen:\n  --intervalMs <n>   Polling-Intervall (Default: 4000)\n  --agent <name>     Agent-Label (Default: owl-dispatcher)\n  --scope <all|main|subagent|hybrid>  Scope-Filter (Default: all)\n  --timeoutMs <n>    Timeout pro OpenClaw-Run (Default: 600000)\n  --once             Genau einen Poll-Lauf ausführen\n`);
+    console.log(`Owl Live Ops Dispatcher\n\nOptionen:\n  --intervalMs <n>   Polling-Intervall (Default: 4000)\n  --agent <name>     Agent-Label (Default: owl-dispatcher)\n  --scope <all|main|subagent|hybrid>  Scope-Filter (Default: all)\n  --timeoutMs <n>    Timeout pro OpenClaw-Run (Default: 600000)\n  --once             Genau einen Poll-Lauf ausführen\n  --selftest         Interne Parser-Checks ausführen und beenden\n`);
+    return;
+  }
+
+  if (args.has("--selftest")) {
+    runSelfTest();
     return;
   }
 

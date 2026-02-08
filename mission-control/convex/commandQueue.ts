@@ -229,6 +229,47 @@ export const listRunEvents = query({
   },
 });
 
+export const getRunContext = query({
+  args: {
+    runId: v.string(),
+  },
+  handler: async (ctx, { runId }) => {
+    const run = await ctx.db.query("agentRuns").withIndex("by_runId", (q) => q.eq("runId", runId)).first();
+    if (!run) return null;
+    const command = await ctx.db.get(run.commandId);
+    if (!command) return null;
+    return {
+      runId,
+      commandId: command._id,
+      status: command.status,
+      scope: command.scope,
+      prompt: command.prompt,
+      title: command.title,
+      sessionKey: command.sessionKey,
+      assignedAgent: command.assignedAgent,
+    };
+  },
+});
+
+export const attachRunSession = mutation({
+  args: {
+    runId: v.string(),
+    sessionKey: v.optional(v.string()),
+    assignedAgent: v.optional(v.string()),
+  },
+  handler: async (ctx, { runId, sessionKey, assignedAgent }) => {
+    const run = await ctx.db.query("agentRuns").withIndex("by_runId", (q) => q.eq("runId", runId)).first();
+    if (!run) throw new Error(`runId nicht gefunden: ${runId}`);
+    const command = await ctx.db.get(run.commandId);
+    if (!command) throw new Error(`Command nicht gefunden für runId: ${runId}`);
+
+    await ctx.db.patch(command._id, {
+      sessionKey,
+      assignedAgent: assignedAgent ?? command.assignedAgent,
+    });
+  },
+});
+
 export const controlRun = mutation({
   args: {
     runId: v.string(),

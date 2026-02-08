@@ -205,6 +205,7 @@ export default function Home() {
   const moveBackToApproval = useMutation(api.postQueue.moveBackToApproval);
   const ingestAgentEvent = useMutation(api.events.ingestAgentEvent);
   const enqueueCommand = useMutation(api.commandQueue.enqueue);
+  const controlRun = useMutation(api.commandQueue.controlRun);
 
   const tasksByDay = useMemo(() => {
     const map = new Map<string, DayBucket>();
@@ -340,6 +341,16 @@ export default function Home() {
     setCommandPriority("high");
   }
 
+  async function onRunControl(cmd: CommandQueueItem, action: "stop" | "retry" | "prioritize") {
+    if (!canEdit || !cmd.runId) return;
+    await controlRun({
+      runId: cmd.runId,
+      action,
+      triggeredBy: "Hasan",
+      reason: action === "stop" ? "Manuell im Dashboard gestoppt" : undefined,
+    });
+  }
+
   return (
     <div className="min-h-screen bg-zinc-100 p-6 text-zinc-900">
       <main className="mx-auto max-w-7xl space-y-6">
@@ -401,6 +412,46 @@ export default function Home() {
                   <p className="mt-1 text-xs text-zinc-500">{new Date(cmd.createdAt).toLocaleString("de-DE")}{cmd.runId ? ` · ${cmd.runId}` : ""}</p>
                   {cmd.resultSummary && <p className="mt-1 text-xs text-emerald-700">Ergebnis: {cmd.resultSummary}</p>}
                   {cmd.error && <p className="mt-1 text-xs text-rose-700">Fehler: {cmd.error}</p>}
+                  {cmd.runId && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {cmd.status === "running" && (
+                        <button
+                          className="rounded border border-rose-300 bg-rose-50 px-2 py-1 text-xs text-rose-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRunControl(cmd, "stop");
+                          }}
+                          disabled={!canEdit}
+                        >
+                          Stop
+                        </button>
+                      )}
+                      {(cmd.status === "failed" || cmd.status === "canceled" || cmd.status === "done") && (
+                        <button
+                          className="rounded border border-sky-300 bg-sky-50 px-2 py-1 text-xs text-sky-800"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRunControl(cmd, "retry");
+                          }}
+                          disabled={!canEdit}
+                        >
+                          Retry
+                        </button>
+                      )}
+                      {cmd.status === "queued" && (
+                        <button
+                          className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRunControl(cmd, "prioritize");
+                          }}
+                          disabled={!canEdit}
+                        >
+                          Priorisieren
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </button>
               ))}
             </div>

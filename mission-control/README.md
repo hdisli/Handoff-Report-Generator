@@ -46,7 +46,7 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
 ## Workflow-Kommandos
 
 - `npm run dev:all` startet Next.js + Convex gemeinsam in einem Terminal.
-- `npm run dev:ops` startet Next.js + Convex + Owl Dispatcher (Queue -> Run -> Live-Status) gemeinsam.
+- `npm run dev:ops` startet Next.js + Convex + Owl Dispatcher (Queue -> echter OpenClaw-Run -> Live-Status) gemeinsam.
 - `npm run dev:web` startet nur das Frontend.
 - `npm run dev:backend` startet nur Convex.
 - `npm run check` führt Lint + Typecheck als Schnellprüfung vor Commits aus.
@@ -57,4 +57,8 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
 
 ## Hinweise
 
-Nach Schema-Änderungen bitte `npm run dev:backend` (oder `npm run dev:all`) laufen lassen, damit Indizes/Typen aktualisiert werden.
+- Dispatcher nutzt `openclaw agent --local --json` als echten Connector. Optional können Agent-IDs je Scope gesetzt werden:
+  - `OWL_MAIN_AGENT_ID`
+  - `OWL_SUBAGENT_AGENT_ID`
+  - `OWL_HYBRID_AGENT_ID`
+- Nach Schema-Änderungen bitte `npm run dev:backend` (oder `npm run dev:all`) laufen lassen, damit Indizes/Typen aktualisiert werden.

@@ -8,6 +8,9 @@
 - Owl Live Ops MVP Phase 1: neues Convex-Datenmodell (`commandQueue`, `agentRuns`, `agentRunEvents`, `controlActions`) inkl. Status-/Audit-Felder für echte Agent-Runs.
 - Neue Convex-Bridge-Basics in `convex/commandQueue.ts`: Queue-Ingestion, Dispatcher-Locking (`takeNextQueued`), Live-Run-Events, Statusabschluss und Control-Aktionen (pause/resume/stop/retry/prioritize).
 - Neuer Host-Dispatcher `scripts/owl-dispatcher.mjs` für End-to-End-Bridge: Queue-Polling, simulierter Connector und Live-Status-Rückkanal (`queued -> running -> done/failed`).
+- Echte OpenClaw-Connector-Bridge im Dispatcher (`openclaw agent --local --json`) inkl. sessionKey-Rückkanal, stdout/stderr-Liveevents und Stop-Unterstützung.
+- Neue Convex-Endpunkte `getRunContext` + `attachRunSession` für Run-Steuerung/Rückkanal.
+- Dashboard-Run-Steuerung für `stop`, `retry`, `prioritize` in der Command-Queue.
 - Neue Scripts `npm run owl:dispatcher` und `npm run dev:ops` (Web + Convex + Dispatcher).
 
 ### Updated

@@ -59,3 +59,27 @@
 
 ### Nächster Schritt (07:00)
 - Simulierten Connector durch echten OpenClaw-Connector ersetzen (Main/Subagent-Start + sessionKey-Rückkanal) und erste echte Steuerbefehle `stop/retry/prio` end-to-end über Dashboard nachweisen.
+
+## 2026-02-08 07:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- `scripts/owl-dispatcher.mjs` auf **echten OpenClaw-Connector** umgestellt:
+  - startet `openclaw agent --local --json --message <prompt>` statt Dry-Run
+  - optionales Scope-Routing über Env-Variablen (`OWL_MAIN_AGENT_ID`, `OWL_SUBAGENT_AGENT_ID`, `OWL_HYBRID_AGENT_ID`)
+  - schreibt `sessionKey`/Agent-Zuordnung zurück in `commandQueue` (`attachRunSession`)
+  - streamt stdout/stderr als Live-Events in `agentRunEvents`
+  - unterstützt `stop` end-to-end durch Prozessabbruch bei manuellem Cancel
+- Neue Convex-Endpunkte in `convex/commandQueue.ts`:
+  - `getRunContext` (Run-/Command-Status für Connector-Polling)
+  - `attachRunSession` (Rückkanal für sessionKey + Agent-Label)
+- Dashboard (`src/app/page.tsx`) um erste Live-Steuerung erweitert:
+  - `Stop` für laufende Runs
+  - `Retry` für `done|failed|canceled`
+  - `Priorisieren` für `queued`
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt (**grün**, nur bekannte Warnungen in `convex/_generated/*`).
+- `npm run owl:dispatcher -- --help` ausgeführt (neue Connector-Optionen validiert).
+
+### Nächster Schritt (08:00)
+- End-to-End-Smoketest mit echtem Queue-Run auf `localhost:3000` (inkl. Nachweis `queued -> running -> done`, anschließend `retry`-Pfad) und ergänzende UI-Anzeige für `sessionKey/resultLink` klickbar machen.

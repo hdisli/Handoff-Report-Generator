@@ -1,0 +1,4 @@
+# Eine direkte MP4-URL pro Zeile.
+# Beispiel (entfernen/ersetzen):
+# https://example.com/path/video1.mp4
+# https://example.com/path/video2.mp4

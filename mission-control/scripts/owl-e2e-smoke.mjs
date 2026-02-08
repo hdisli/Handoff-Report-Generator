@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import fs from "node:fs";
+import path from "node:path";
 import process from "node:process";
 import { spawn } from "node:child_process";
 import { ConvexHttpClient } from "convex/browser";
@@ -23,6 +25,24 @@ function parseArgs(argv) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function loadDotEnvLocal() {
+  const envPath = path.resolve(process.cwd(), ".env.local");
+  if (!fs.existsSync(envPath)) return;
+
+  const raw = fs.readFileSync(envPath, "utf8");
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const value = trimmed.slice(eq + 1).trim();
+    if (!(key in process.env)) {
+      process.env[key] = value;
+    }
+  }
 }
 
 async function runDispatcherOnce(timeoutMs) {
@@ -73,7 +93,9 @@ async function main() {
     return;
   }
 
-  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  loadDotEnvLocal();
+
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || process.env.CONVEX_URL;
   if (!convexUrl) {
     throw new Error("NEXT_PUBLIC_CONVEX_URL fehlt.");
   }

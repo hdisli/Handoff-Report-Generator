@@ -67,6 +67,7 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
   - `OWL_MAIN_AGENT_ID`
   - `OWL_SUBAGENT_AGENT_ID`
   - `OWL_HYBRID_AGENT_ID`
-- Für Standalone-Dispatcher-Starts muss `NEXT_PUBLIC_CONVEX_URL` gesetzt sein (oder via `.env.local` geladen werden), z. B.:
+- Dispatcher/Smoke-Test laden `.env.local` jetzt automatisch (Fallback `CONVEX_URL`), deshalb funktioniert `npm run dev:ops` ohne extra ENV-Exports.
+- Für Standalone-Dispatcher-Starts kann die URL weiterhin explizit gesetzt werden, z. B.:
   - `NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210 npm run owl:dispatcher -- --once`
 - Nach Schema-Änderungen bitte `npm run dev:backend` (oder `npm run dev:all`) laufen lassen, damit Indizes/Typen aktualisiert werden.

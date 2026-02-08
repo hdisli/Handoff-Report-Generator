@@ -149,3 +149,24 @@
 
 ### Nächster Schritt (11:00)
 - Vollständigen lokalen End-to-End-Lauf mit laufendem `dev:ops` aufzeichnen (Output-Snippets + ggf. Screenshot) und anschließend PR finalisieren (Link in Status/Abschlussmeldung an Hasan).
+
+## 2026-02-08 11:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- `scripts/owl-dispatcher.mjs` robuster gemacht, damit `npm run dev:ops` stabil hochfährt:
+  - lädt `.env.local` automatisch (kein manueller ENV-Export mehr nötig),
+  - akzeptiert zusätzlich `CONVEX_URL` als Fallback,
+  - behandelt frühe Convex-Startfehler im Polling als Warnung statt Prozessabbruch.
+- `scripts/owl-e2e-smoke.mjs` ebenfalls mit automatischem `.env.local`-Load + `CONVEX_URL`-Fallback ausgestattet.
+- README + CHANGELOG aktualisiert (neues Verhalten dokumentiert).
+
+### Kurztest
+- `npm run check` ausgeführt (**grün**, nur bekannte Warnungen in `convex/_generated/*`).
+- `npm run dev:ops` gestartet: Next + Convex + Dispatcher laufen parallel, Dispatcher bleibt trotz initialem `ECONNREFUSED` aktiv und pollt weiter.
+- Voller Smoke-Lauf erfolgreich:
+  - `npm run owl:e2e:smoke -- --dispatcherTimeoutMs 240000 --waitTimeoutMs 240000`
+  - Ergebnis: `enqueue -> done -> retry -> done` mit `retryCount=1`.
+  - Run-Beispiel: `run_1770544926157_2oak6upw` (Retry: `run_1770544932728_f3jq64wy`).
+
+### Nächster Schritt (12:00)
+- PR-Finalisierung: Branch pushen, PR-Link erzeugen und in die Sprint-Fertigmeldung für Hasan aufnehmen; danach verbleibende MVP-Lücken gegen DoD gegentesten (insb. manuelle UI-Steuerpfade als Nachweis-Screens).

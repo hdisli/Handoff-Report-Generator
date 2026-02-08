@@ -38,9 +38,8 @@ function loadDotEnvLocal() {
   }
 }
 
-function hasEvent(events, needle) {
-  const n = needle.toLowerCase();
-  return events.some((event) => `${event.kind} ${event.message}`.toLowerCase().includes(n));
+function hasAction(actions, action) {
+  return actions.some((item) => item.action === action);
 }
 
 async function main() {
@@ -67,11 +66,13 @@ async function main() {
     eventsByRun.set(runId, events);
   }
 
+  const controlActions = await client.query("commandQueue:listControlActions", { limit: 400 });
+
   const checks = {
     realRun: rows.some((row) => row.status === "done" && !!row.runId),
     liveEvents: Array.from(eventsByRun.values()).some((events) => events.length > 0),
-    stopRetry: Array.from(eventsByRun.values()).some((events) => hasEvent(events, "control-aktion: stop") && hasEvent(events, "control-aktion: retry")),
-    pauseResume: Array.from(eventsByRun.values()).some((events) => hasEvent(events, "control-aktion: pause") && hasEvent(events, "control-aktion: resume")),
+    stopRetry: hasAction(controlActions, "stop") && hasAction(controlActions, "retry"),
+    pauseResume: hasAction(controlActions, "pause") && hasAction(controlActions, "resume"),
     resultVisible: rows.some((row) => row.status === "done" && !!row.resultSummary && !!row.resultLink),
   };
 

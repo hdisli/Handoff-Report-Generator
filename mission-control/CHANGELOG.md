@@ -23,6 +23,7 @@
 - Owl-Dispatcher auf Convex-HTTP-Funktionspfade (`commandQueue:...`) korrigiert und mit Default-Agent-Mapping (`main` / `swarm-automation`) robuster gemacht.
 - Command-Queue-UI zeigt jetzt `sessionKey` und klickbaren `resultLink` für schnellere Nachverfolgung.
 - Dispatcher + Smoke-Test laden `.env.local` automatisch (Fallback `CONVEX_URL`) und bleiben beim Start-Race gegen Convex robust (Polling-Fehler führen nicht mehr zum Prozessabbruch).
+- Dashboard-Priorisierung für `queued` Commands ohne `runId` repariert: neuer Mutationspfad `prioritizeQueuedCommand`; Audit-Trail (`controlActions`) speichert zusätzlich optional `commandId`.
 
 ## 2026-02-07
 

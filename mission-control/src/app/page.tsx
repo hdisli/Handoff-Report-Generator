@@ -238,6 +238,7 @@ export default function Home() {
   const ingestAgentEvent = useMutation(api.events.ingestAgentEvent);
   const enqueueCommand = useMutation(api.commandQueue.enqueue);
   const controlRun = useMutation(api.commandQueue.controlRun);
+  const prioritizeQueuedCommand = useMutation(api.commandQueue.prioritizeQueuedCommand);
 
   const tasksByDay = useMemo(() => {
     const map = new Map<string, DayBucket>();
@@ -373,13 +374,22 @@ export default function Home() {
     setCommandPriority("high");
   }
 
-  async function onRunControl(cmd: CommandQueueItem, action: "pause" | "resume" | "stop" | "retry" | "prioritize") {
+  async function onRunControl(cmd: CommandQueueItem, action: "pause" | "resume" | "stop" | "retry") {
     if (!canEdit || !cmd.runId) return;
     await controlRun({
       runId: cmd.runId,
       action,
       triggeredBy: "Hasan",
       reason: action === "stop" ? "Manuell im Dashboard gestoppt" : undefined,
+    });
+  }
+
+  async function onPrioritizeQueued(cmd: CommandQueueItem) {
+    if (!canEdit || cmd.status !== "queued") return;
+    await prioritizeQueuedCommand({
+      commandId: cmd._id as never,
+      triggeredBy: "Hasan",
+      reason: "Manuell im Dashboard priorisiert",
     });
   }
 
@@ -458,7 +468,7 @@ export default function Home() {
                   </div>
                   {cmd.resultSummary && <p className="mt-1 text-xs text-emerald-700">Ergebnis: {cmd.resultSummary}</p>}
                   {cmd.error && <p className="mt-1 text-xs text-rose-700">Fehler: {cmd.error}</p>}
-                  {cmd.runId && (
+                  {(cmd.runId || cmd.status === "queued") && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {cmd.status === "running" && (
                         <>
@@ -513,7 +523,7 @@ export default function Home() {
                           className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onRunControl(cmd, "prioritize");
+                            onPrioritizeQueued(cmd);
                           }}
                           disabled={!canEdit}
                         >

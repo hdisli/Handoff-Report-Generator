@@ -256,4 +256,27 @@
 - Cron-Deaktivierung erfolgt sofort nach erfolgreicher PR-Erstellung + finaler MVP-Fertigmeldung.
 
 ### Nächster Schritt (16:00)
+- Priorisierungs-Lücke im Dashboard schließen (queued Commands müssen auch ohne `runId` priorisierbar sein) und Audit-Trail dafür sauber mit `commandId` erfassen.
+
+## 2026-02-08 16:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- Priorisierungs-Bridge für **queued Commands ohne Run** geschlossen:
+  - neue Convex-Mutation `commandQueue:prioritizeQueuedCommand` in `convex/commandQueue.ts`
+  - erlaubt Priorisierung direkt über `commandId`, auch wenn noch keine `runId` existiert.
+- Audit-Trail robuster gemacht:
+  - `controlActions` speichert jetzt optional `commandId` zusätzlich zu `runId`.
+  - bestehende `controlRun`-Aktionen schreiben ebenfalls `commandId` mit.
+- Dashboard-UI (`src/app/page.tsx`) angepasst:
+  - „Priorisieren“-Button ist jetzt bei `queued` sichtbar, auch ohne `runId`.
+  - Button ruft nun `prioritizeQueuedCommand` statt `controlRun` auf.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt (**grün**, nur bekannte Warnungen in `convex/_generated/*`).
+- `npm run owl:mvp:verify -- --help` ausgeführt (Verify-CLI weiterhin funktionsfähig).
+
+### Blocker
+- PR-Link weiterhin blockiert durch fehlende GitHub-Authentifizierung auf diesem Host (`gh auth login` oder `GH_TOKEN`).
+
+### Nächster Schritt (17:00)
 - Nach bereitgestellter GitHub-Auth: Branch pushen, PR erstellen, Link in Abschlussmeldung setzen und anschließend den Sprint-Cron `6ae8f4f2-164b-4b68-ae67-3bec243dcbb2` deaktivieren/entfernen.

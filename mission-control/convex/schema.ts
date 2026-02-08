@@ -124,13 +124,15 @@ export default defineSchema({
     .index("by_ts", ["ts"]),
 
   controlActions: defineTable({
-    runId: v.string(),
+    runId: v.optional(v.string()),
+    commandId: v.optional(v.id("commandQueue")),
     action: v.union(v.literal("pause"), v.literal("resume"), v.literal("stop"), v.literal("retry"), v.literal("prioritize")),
     triggeredBy: v.string(),
     ts: v.number(),
     reason: v.optional(v.string()),
   })
     .index("by_runId_ts", ["runId", "ts"])
+    .index("by_commandId_ts", ["commandId", "ts"])
     .index("by_ts", ["ts"]),
 
   members: defineTable({

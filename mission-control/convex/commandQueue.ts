@@ -259,6 +259,16 @@ export const setRunState = mutation({
   },
 });
 
+export const listControlActions = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { limit }) => {
+    const max = Math.min(Math.max(limit ?? 200, 1), 1000);
+    return await ctx.db.query("controlActions").withIndex("by_ts").order("desc").take(max);
+  },
+});
+
 export const listRunEvents = query({
   args: {
     runId: v.string(),
@@ -328,6 +338,7 @@ export const controlRun = mutation({
     const now = Date.now();
     await ctx.db.insert("controlActions", {
       runId: args.runId,
+      commandId: command._id,
       action: args.action,
       triggeredBy: args.triggeredBy,
       ts: now,
@@ -371,5 +382,49 @@ export const controlRun = mutation({
     });
 
     return { ok: true };
+  },
+});
+
+export const prioritizeQueuedCommand = mutation({
+  args: {
+    commandId: v.id("commandQueue"),
+    triggeredBy: v.string(),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, { commandId, triggeredBy, reason }) => {
+    const command = await ctx.db.get(commandId);
+    if (!command) throw new Error(`Command nicht gefunden: ${commandId}`);
+    if (command.status !== "queued") {
+      throw new Error("Priorisieren nur für queued Commands erlaubt");
+    }
+
+    const now = Date.now();
+    const newPriority = command.priority === "urgent" ? "urgent" : "high";
+
+    await ctx.db.patch(commandId, {
+      priority: newPriority,
+    });
+
+    await ctx.db.insert("controlActions", {
+      runId: command.runId,
+      commandId,
+      action: "prioritize",
+      triggeredBy,
+      ts: now,
+      reason,
+    });
+
+    await ctx.db.insert("activities", {
+      createdAt: now,
+      actor: "agent",
+      source: "owl-live-ops",
+      type: "command",
+      action: `Command priorisiert: ${command.title}`,
+      details: `Priorität: ${command.priority} -> ${newPriority}`,
+      metadata: JSON.stringify({ commandId }),
+      searchable: `command prioritize ${command.title} ${command.scope} ${newPriority}`,
+    });
+
+    return { ok: true, priority: newPriority };
   },
 });

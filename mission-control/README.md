@@ -71,6 +71,7 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
   - `OWL_SUBAGENT_AGENT_ID`
   - `OWL_HYBRID_AGENT_ID`
 - Dispatcher/Smoke-Test laden `.env.local` jetzt automatisch (Fallback `CONVEX_URL`), deshalb funktioniert `npm run dev:ops` ohne extra ENV-Exports.
+- Dispatcher schreibt Heartbeats nach Convex; das Dashboard zeigt daraus online/offline + Zustand des Connectors, damit Bridge-Ausfälle sofort sichtbar sind.
 - `owl:mvp:verify` gibt bei fehlendem Backend jetzt eine klare Diagnose mit Startbefehl statt nur einem rohen Fetch-Stacktrace.
 - Für Standalone-Dispatcher-Starts kann die URL weiterhin explizit gesetzt werden, z. B.:
   - `NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210 npm run owl:dispatcher -- --once`

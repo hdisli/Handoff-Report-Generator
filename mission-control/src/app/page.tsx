@@ -74,6 +74,17 @@ type LiveOpsSnapshot = {
   lastUpdateTs: number;
 };
 
+type DispatcherStatus = {
+  _id: string;
+  dispatcher: string;
+  ts: number;
+  state: "idle" | "polling" | "running" | "error";
+  runId?: string;
+  message?: string;
+  isOnline: boolean;
+  ageMs: number;
+};
+
 type SearchResult = {
   activities: Activity[];
   tasks: Task[];
@@ -211,6 +222,9 @@ export default function Home() {
   const rawCommandQueue = useQuery(api.commandQueue.list, { status: "all", limit: 40 });
   const commandQueue = useMemo(() => (rawCommandQueue ?? []) as CommandQueueItem[], [rawCommandQueue]);
   const liveOpsSnapshot = (useQuery(api.commandQueue.liveOpsSnapshot, {}) ?? null) as LiveOpsSnapshot | null;
+  const rawDispatcherStatus = useQuery(api.commandQueue.dispatcherStatus, { staleAfterMs: 20000 });
+  const dispatcherStatus = useMemo(() => (rawDispatcherStatus ?? []) as DispatcherStatus[], [rawDispatcherStatus]);
+  const primaryDispatcher = dispatcherStatus[0] ?? null;
   const effectiveRunId =
     selectedRunId || commandQueue.find((item) => item.runId && (item.status === "running" || item.status === "paused"))?.runId || commandQueue.find((item) => item.runId)?.runId || "";
   const search = (useQuery(api.search.global, { term: queryTerm }) ?? {
@@ -576,6 +590,18 @@ export default function Home() {
                 />
                 <p className="text-sm font-medium">{liveStatusLabel[liveOpsSnapshot?.globalStatus ?? "idle"]}</p>
                 <p className="text-xs text-zinc-600">Aktiv: {liveOpsSnapshot?.activeRuns ?? 0}</p>
+              </div>
+              <div className="mt-2 rounded border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-600">
+                {primaryDispatcher ? (
+                  <>
+                    <span className={`inline-block h-2.5 w-2.5 rounded-full mr-1 ${primaryDispatcher.isOnline ? "bg-emerald-500" : "bg-rose-500"}`} />
+                    Dispatcher <span className="font-semibold">{primaryDispatcher.dispatcher}</span>: {primaryDispatcher.isOnline ? "online" : "offline"}
+                    {` · ${primaryDispatcher.state}`}
+                    {primaryDispatcher.message ? ` · ${primaryDispatcher.message}` : ""}
+                  </>
+                ) : (
+                  "Dispatcher-Heartbeat: noch keine Daten"
+                )}
               </div>
               <div className="mt-2 grid grid-cols-3 gap-1 text-xs text-zinc-600">
                 <span>Queued: {liveOpsSnapshot?.counts.queued ?? 0}</span>

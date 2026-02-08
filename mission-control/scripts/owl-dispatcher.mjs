@@ -115,11 +115,27 @@ async function runAgentCommand({ command, scope, timeoutMs, onStdout, onStderr, 
   });
 }
 
-async function runCommand(client, command, agentName, timeoutMs) {
+async function sendHeartbeat(client, payload) {
+  try {
+    await client.mutation("commandQueue:dispatcherHeartbeat", payload);
+  } catch {
+    // Heartbeat ist best-effort; Run darf nicht daran scheitern.
+  }
+}
+
+async function runCommand(client, command, agentName, timeoutMs, preferredScope) {
   const runId = command.runId;
   const runAbort = new AbortController();
   let childProcess = null;
   let processPaused = false;
+
+  await sendHeartbeat(client, {
+    dispatcher: agentName,
+    state: "running",
+    runId,
+    scope: preferredScope,
+    message: `Run aktiv: ${command.title}`,
+  });
 
   await client.mutation("commandQueue:appendRunEvent", {
     runId,
@@ -140,6 +156,13 @@ async function runCommand(client, command, agentName, timeoutMs) {
       if (runContext?.status === "paused" && childProcess && !processPaused) {
         childProcess.kill("SIGSTOP");
         processPaused = true;
+        await sendHeartbeat(client, {
+          dispatcher: agentName,
+          state: "running",
+          runId,
+          scope: preferredScope,
+          message: "Run pausiert (SIGSTOP)",
+        });
         await client.mutation("commandQueue:appendRunEvent", {
           runId,
           kind: "connector",
@@ -152,6 +175,13 @@ async function runCommand(client, command, agentName, timeoutMs) {
       if (runContext?.status === "running" && childProcess && processPaused) {
         childProcess.kill("SIGCONT");
         processPaused = false;
+        await sendHeartbeat(client, {
+          dispatcher: agentName,
+          state: "running",
+          runId,
+          scope: preferredScope,
+          message: "Run fortgesetzt (SIGCONT)",
+        });
         await client.mutation("commandQueue:appendRunEvent", {
           runId,
           kind: "connector",
@@ -242,6 +272,13 @@ async function main() {
 
   const client = new ConvexHttpClient(convexUrl);
 
+  await sendHeartbeat(client, {
+    dispatcher: agentName,
+    state: "polling",
+    scope: preferredScope,
+    message: "Dispatcher gestartet",
+  });
+
   const cycle = async () => {
     const next = await client.mutation("commandQueue:takeNextQueued", {
       dispatcher: agentName,
@@ -250,16 +287,35 @@ async function main() {
     });
 
     if (!next) {
+      await sendHeartbeat(client, {
+        dispatcher: agentName,
+        state: "idle",
+        scope: preferredScope,
+        message: "Keine queued Commands",
+      });
       return false;
     }
 
     console.log(`[dispatcher] run gestartet: ${next.runId} (${next.title})`);
     try {
-      await runCommand(client, next, agentName, timeoutMs);
+      await runCommand(client, next, agentName, timeoutMs, preferredScope);
+      await sendHeartbeat(client, {
+        dispatcher: agentName,
+        state: "polling",
+        scope: preferredScope,
+        message: `Run abgeschlossen: ${next.runId}`,
+      });
       console.log(`[dispatcher] run abgeschlossen: ${next.runId}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const canceled = /gestoppt|stop-control/i.test(message);
+      await sendHeartbeat(client, {
+        dispatcher: agentName,
+        state: canceled ? "polling" : "error",
+        runId: next.runId,
+        scope: preferredScope,
+        message,
+      });
       await client.mutation("commandQueue:setRunState", {
         runId: next.runId,
         status: canceled ? "canceled" : "failed",
@@ -283,6 +339,12 @@ async function main() {
       await cycle();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      await sendHeartbeat(client, {
+        dispatcher: agentName,
+        state: "error",
+        scope: preferredScope,
+        message,
+      });
       console.warn(`[dispatcher] Polling-Fehler, nächster Versuch in ${intervalMs}ms: ${message}`);
     }
     await sleep(intervalMs);

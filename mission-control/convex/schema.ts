@@ -141,4 +141,15 @@ export default defineSchema({
     isActive: v.boolean(),
     createdAt: v.number(),
   }).index("by_role", ["role"]),
+
+  dispatcherHeartbeats: defineTable({
+    dispatcher: v.string(),
+    ts: v.number(),
+    state: v.union(v.literal("idle"), v.literal("polling"), v.literal("running"), v.literal("error")),
+    runId: v.optional(v.string()),
+    scope: v.optional(v.union(v.literal("all"), v.literal("main"), v.literal("subagent"), v.literal("hybrid"))),
+    message: v.optional(v.string()),
+  })
+    .index("by_dispatcher", ["dispatcher"])
+    .index("by_ts", ["ts"]),
 });

@@ -1,5 +1,26 @@
 # Owl Live Ops Cockpit – Sprint-Status
 
+## 2026-02-08 19:00 (Europe/Berlin)
+
+### Geliefert (testbarer Fortschritt)
+- **Dispatcher-Live-Rückkanal erweitert:** neues Convex-Heartbeat-Modell `dispatcherHeartbeats` in `convex/schema.ts` für Online/Offline- und Zustands-Tracking (`idle|polling|running|error`).
+- Neue Endpunkte in `convex/commandQueue.ts`:
+  - `dispatcherHeartbeat` (upsert pro Dispatcher)
+  - `dispatcherStatus` (liefert Heartbeat + `isOnline`/`ageMs`)
+- `scripts/owl-dispatcher.mjs` sendet jetzt Heartbeats:
+  - beim Start (polling),
+  - im Idle-Polling (keine Queue),
+  - beim Run-Start/-Fortschritt,
+  - bei Fehlern inkl. Fehlermeldung.
+- Dashboard (`src/app/page.tsx`) zeigt im Owl-Statusbereich jetzt den **echten Dispatcher-Health-Status** (online/offline + state + letzte Meldung), damit sichtbar ist, ob `localhost:3000` wirklich Ausführung triggern kann.
+
+### Kurztest
+- `npm run check` im Ordner `mission-control` ausgeführt: **grün**.
+- `npm run owl:mvp:verify` ausgeführt ohne laufendes Backend: erwartete, klare Diagnose „Convex nicht erreichbar … starte `npm run dev:ops`“ bestätigt.
+
+### Nächster Schritt (20:00)
+- Heartbeat-basierte Warnlogik im Dashboard ergänzen (z. B. UI-Warnbanner bei >20s ohne Heartbeat) und anschließend E2E-Nachweis mit laufendem `dev:ops` (Queue-Eintrag -> Dispatcher online -> Run done).
+
 ## 2026-02-08 04:00 (Europe/Berlin)
 
 ### Geliefert (testbarer Fortschritt)

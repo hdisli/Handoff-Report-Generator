@@ -18,6 +18,7 @@
 - Neues Verifikationsscript `scripts/owl-mvp-verify.mjs` + npm-Command `owl:mvp:verify`, das MVP-DoD-Kriterien direkt gegen den aktuellen Convex-Run-Verlauf prüft.
 - `owl:mvp:verify` unterstützt jetzt `--waitForBackendMs`, damit Verifikation auch direkt beim Hochfahren von Convex robust automatisiert werden kann.
 - Neues Script `scripts/owl-pr-readiness.mjs` + npm-Command `owl:pr:ready` als PR-Blocker-Check (Working Tree, Upstream, GitHub-Auth) mit klaren Next-Commands.
+- Neues Dispatcher-Heartbeat-Modell (`dispatcherHeartbeats`) inkl. Convex-Endpunkten `dispatcherHeartbeat` und `dispatcherStatus` für Online/Offline-Health des echten Connectors.
 
 ### Updated
 - README um die neue Handoff-/Smoke-Check-Nutzung ergänzt.
@@ -27,6 +28,7 @@
 - Dashboard-Priorisierung für `queued` Commands ohne `runId` repariert: neuer Mutationspfad `prioritizeQueuedCommand`; Audit-Trail (`controlActions`) speichert zusätzlich optional `commandId`.
 - Dashboard-Live-Timeline zeigt jetzt zusätzlich einen sichtbaren Audit-Trail für Control-Aktionen (`pause/resume/stop/retry/prioritize`) inkl. Filter auf den aktuell ausgewählten Run.
 - `owl:mvp:verify` liefert bei nicht erreichbarem Convex-Backend nun eine klare, handlungsorientierte Fehlermeldung (inkl. Start-Hinweis) statt unklarem Stacktrace.
+- Dashboard zeigt im Owl-Body zusätzlich den Dispatcher-Health (online/offline, state, letzte Meldung) als Live-Indikator für die echte Queue->Run-Bridge.
 
 ## 2026-02-07
 

@@ -321,6 +321,59 @@ export const attachRunSession = mutation({
   },
 });
 
+export const dispatcherHeartbeat = mutation({
+  args: {
+    dispatcher: v.string(),
+    state: v.union(v.literal("idle"), v.literal("polling"), v.literal("running"), v.literal("error")),
+    runId: v.optional(v.string()),
+    scope: v.optional(v.union(v.literal("all"), v.literal("main"), v.literal("subagent"), v.literal("hybrid"))),
+    message: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const existing = await ctx.db.query("dispatcherHeartbeats").withIndex("by_dispatcher", (q) => q.eq("dispatcher", args.dispatcher)).first();
+
+    const payload = {
+      dispatcher: args.dispatcher,
+      ts: now,
+      state: args.state,
+      runId: args.runId,
+      scope: args.scope,
+      message: args.message,
+    };
+
+    if (existing) {
+      await ctx.db.patch(existing._id, payload);
+      return existing._id;
+    }
+
+    return await ctx.db.insert("dispatcherHeartbeats", payload);
+  },
+});
+
+export const dispatcherStatus = query({
+  args: {
+    dispatcher: v.optional(v.string()),
+    staleAfterMs: v.optional(v.number()),
+  },
+  handler: async (ctx, { dispatcher, staleAfterMs }) => {
+    const maxAge = Math.max(1000, staleAfterMs ?? 15000);
+    const now = Date.now();
+
+    const rows = dispatcher
+      ? await ctx.db.query("dispatcherHeartbeats").withIndex("by_dispatcher", (q) => q.eq("dispatcher", dispatcher)).collect()
+      : await ctx.db.query("dispatcherHeartbeats").withIndex("by_ts").order("desc").take(10);
+
+    return rows
+      .sort((a, b) => b.ts - a.ts)
+      .map((row) => ({
+        ...row,
+        isOnline: now - row.ts <= maxAge,
+        ageMs: now - row.ts,
+      }));
+  },
+});
+
 export const controlRun = mutation({
   args: {
     runId: v.string(),

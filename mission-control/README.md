@@ -59,7 +59,9 @@ NEXT_PUBLIC_CONVEX_URL=<deine_convex_url>
 - `npm run owl:pr:ready` prüft PR-Bereitschaft (Git-Status, Upstream, `gh`-Auth) und gibt die nächsten Push/PR-Kommandos aus.
 - `npm run handoff` erzeugt einen kompakten Handoff-Report (Diff, Risiko-Signale, Review-Fokus, TODOs) im Terminal.
 - `npm run handoff:write` schreibt denselben Report nach `HANDOFF_REPORT.md` (praktisch für PR-Beschreibungen).
+- `npm run handoff:brief` erzeugt zusätzlich `REVIEW_BRIEF.md` mit auto-erkannten Review-Schwerpunkten + Entscheidungsfragen (copy-paste-fähig für PR-Kommentar/Review-Thread).
 - Optionaler Smoke-Check: `node scripts/handoff-report.mjs --smoke-cmd "npm run check"` hängt ein kurzes Pass/Fail-Ergebnis inkl. Ausgabe-Snippet an.
+- Optionales Brief-File direkt: `node scripts/handoff-report.mjs --brief-out REVIEW_BRIEF.md`.
 
 ## Hinweise
 

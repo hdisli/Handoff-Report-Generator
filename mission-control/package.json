@@ -15,6 +15,7 @@
     "check": "npm run lint && npm run typecheck",
     "handoff": "node scripts/handoff-report.mjs",
     "handoff:write": "node scripts/handoff-report.mjs --out HANDOFF_REPORT.md",
+    "handoff:brief": "node scripts/handoff-report.mjs --brief-out REVIEW_BRIEF.md",
     "owl:dispatcher": "node scripts/owl-dispatcher.mjs",
     "owl:e2e:smoke": "node scripts/owl-e2e-smoke.mjs",
     "owl:mvp:seed-controls": "node scripts/owl-mvp-seed-controls.mjs",

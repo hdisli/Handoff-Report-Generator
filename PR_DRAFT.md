@@ -1,61 +1,53 @@
 # PR Draft
 
 ## Titel
-Handoff-Report: Risiko-Signale + optionaler Smoke-Check
+feat(collab): Auto-Review-Brief für schnellere PR-Entscheidungen
 
 ## Branch / Commit
-- Branch: `feat/handoff-risk-smoke-check`
-- Commit: `203e6b8`
+- Branch: `feat/nightly-review-brief-generator`
+- Commit: `ba6a2b9`
 
 ## Beschreibung
-Diese Änderung verbessert die Übergabe- und Review-Qualität im Nightly-Workflow:
+Diese Änderung verbessert die tägliche Zusammenarbeit im Review-Prozess, indem aus dem Diff automatisch ein **Review-Brief** erzeugt wird.
 
-1. **Automatische Risiko-Signale** im Handoff Report
-   - erkennt Änderungen an Schema/Backend (`convex/`, `schema`)
-   - erkennt Config-/ENV-bezogene Änderungen
-   - erkennt Dependency-Änderungen (`package.json`, `package-lock.json`)
-   - markiert große Diffs (>300 geänderte Zeilen)
+Neu im `handoff-report`:
+1. **Domänen-Erkennung** (UI/UX, Backend/DB, Ops, Konfiguration, Doku)
+2. **Automatischer Entscheidungsbedarf** (Review-Fragen basierend auf Risiko-Signalen + betroffenen Bereichen)
+3. Neuer CLI-Parameter: `--brief-out <datei>` für einen separaten, kurz nutzbaren PR-Review-Text
+4. Neuer npm-Shortcut: `npm run handoff:brief`
+5. README um Nutzung ergänzt
 
-2. **Optionaler Smoke-Check** über neuen CLI-Parameter
-   - `--smoke-cmd "<kommando>"`
-   - zeigt Ergebnis (Pass/Fail), Exit-Code und letzte Ausgabezeilen direkt im Report
+## Nutzen für die Zusammenarbeit
+- **Schnellere Reviews:** Reviewer sehen sofort, wo sie zuerst hinschauen sollen.
+- **Besserer Entscheidungsfluss:** Kritische Fragen werden vorab sichtbar statt erst im Kommentar-Pingpong.
+- **Höhere Übergabe-Qualität:** Copy-Paste-Block für PR-Kommentar spart Zeit und macht Übergaben konsistent.
 
-3. **Doku aktualisiert**
-   - README ergänzt (Nutzung des Smoke-Checks)
-   - Changelog ergänzt
-
-## Nutzen
-Reviewer sehen sofort:
-- ob ein PR potenziell riskant ist,
-- ob mindestens ein Basis-Test gelaufen ist,
-- und erhalten bessere Entscheidungsgrundlagen für Freigaben.
-
-Das reduziert Rückfragen und beschleunigt Übergaben zwischen Build- und Review-Phase.
-
-## Testhinweise
+## Testhinweise (Smoke)
 ```bash
 cd mission-control
-node scripts/handoff-report.mjs --smoke-cmd "npm run typecheck"
+node scripts/handoff-report.mjs --brief-out REVIEW_BRIEF.md --smoke-cmd "node -e \"console.log('smoke ok')\""
 ```
 Erwartung:
-- Abschnitt **„Risiko-Signale“** ist vorhanden.
-- Abschnitt **„Smoke-Check“** ist vorhanden und zeigt bei erfolgreichem Lauf `✅ erfolgreich`.
+- Handoff-Report wird ausgegeben.
+- `REVIEW_BRIEF.md` wird geschrieben.
+- Smoke-Check zeigt `✅ erfolgreich`.
 
 ## Demo (Before / After)
-- **Before:** Handoff Report enthielt nur Diff/TODO/Review-Template.
-- **After:** Zusätzliche Sektionen:
-  - `Risiko-Signale` (automatische Warnhinweise)
-  - `Smoke-Check` (Testkommando + Status + Ausgabe-Snippet)
+- **Before:** Handoff-Report lieferte Diff + Risiko-Hinweise, aber keinen sofort nutzbaren Review-Kommentar mit Entscheidungsfragen.
+- **After:** `REVIEW_BRIEF.md` enthält
+  - priorisierte Review-Schwerpunkte pro Domäne,
+  - automatische Entscheidungsfragen,
+  - einen Copy-Paste-Block für den PR-Thread.
 
-Beispiel aus lokalem Lauf:
-- Kommando: `npm run typecheck`
-- Ergebnis: `✅ erfolgreich`
+Beispielauszug aus `REVIEW_BRIEF.md`:
+- "Was Reviewer zuerst prüfen sollten" mit konkreten Test-Hinweisen
+- "Entscheidungen, die wir im Review klären sollten" als direkte Fragenliste
 
 ## Nächste Schritte
-1. PR im Browser öffnen und Draft/Review anlegen:
-   - https://github.com/hdisli/Handoff-Report-Generator/pull/new/feat/handoff-risk-smoke-check
-2. Reviewer zuweisen.
-3. Optional zusätzlich CI-Check (`npm run check`) als zweiten Smoke-Lauf dokumentieren.
+1. PR über Compare-Link öffnen:
+   - https://github.com/hdisli/Handoff-Report-Generator/pull/new/feat/nightly-review-brief-generator
+2. Draft-PR anlegen und Reviewer zuweisen.
+3. Optional zweiten Smoke-Lauf mit `npm run check` ergänzen.
 
 ## Blocker
-`gh pr create` war lokal nicht möglich, da GitHub CLI nicht authentifiziert ist (`gh auth login` erforderlich). Deshalb Branch + Commit + PR-Draft vorbereitet, **kein Merge nach main**.
+`gh pr create` war lokal nicht möglich, weil GitHub CLI hier nicht authentifiziert ist (`gh auth login` fehlt). Deshalb Branch + Commit + `PR_DRAFT.md` vorbereitet, **kein Merge nach main**.
